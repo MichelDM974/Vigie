@@ -43,6 +43,15 @@ class Stockage:
                     secondes REAL NOT NULL,
                     PRIMARY KEY (minute, signal)
                 );
+                CREATE TABLE IF NOT EXISTS fausses_alertes (
+                    id INTEGER PRIMARY KEY,
+                    quand TEXT NOT NULL,  -- heure locale, AAAA-MM-JJTHH:MM:SS
+                    reference INTEGER,  -- posture de référence la plus proche
+                    signal TEXT,  -- signal qui dépassait le plus
+                    niveau REAL NOT NULL,  -- assombrissement à ce moment
+                    mesures TEXT NOT NULL,  -- JSON, lissées : de quoi recaler les tolérances
+                    ecarts TEXT NOT NULL  -- JSON, normalisés avec la tolérance générale du moment
+                );
             """)
 
     def postures(self):
@@ -106,6 +115,24 @@ class Stockage:
                 (jour + "T%",),
             ).fetchall()
         return {l["etat"]: l["s"] for l in lignes}
+
+    def ajouter_fausse_alerte(self, reference, signal, niveau, mesures, ecarts):
+        quand = datetime.now().isoformat(timespec="seconds")
+        with self._verrou, self._conn:
+            self._conn.execute(
+                """INSERT INTO fausses_alertes (quand, reference, signal, niveau, mesures, ecarts)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (quand, reference, signal, niveau, json.dumps(mesures), json.dumps(ecarts)),
+            )
+
+    def fausses_alertes(self, jour):
+        """Fausses alertes signalées le jour donné (AAAA-MM-JJ), dans l'ordre."""
+        with self._verrou:
+            lignes = self._conn.execute(
+                "SELECT * FROM fausses_alertes WHERE quand LIKE ? ORDER BY id", (jour + "T%",)
+            ).fetchall()
+        return [dict(l, mesures=json.loads(l["mesures"]), ecarts=json.loads(l["ecarts"]))
+                for l in lignes]
 
     def causes(self, jour):
         """Secondes avachi par signal en cause le jour donné (AAAA-MM-JJ)."""

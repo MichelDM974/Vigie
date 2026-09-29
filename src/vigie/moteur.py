@@ -17,6 +17,9 @@ DUREE_PREPARATION = 3.0  # compte à rebours avant d'enregistrer une posture
 DUREE_CAPTURE = 3.0
 MESURES_MIN = 5  # images exploitables exigées pendant la capture
 ETATS_COMPTES = ("ok", "avachi", "absent", "pause")  # temps cumulés pour le bilan
+# Une fausse alerte signalée juste après s'être redressé (par réflexe, le temps d'atteindre
+# le menu) vise encore le dernier moment jugé avachi.
+SOUVENIR_AVACHI = 10.0
 
 COULEURS = {"ok": (12, 163, 12), "avachi": (103, 103, 230)}  # BGR : --good, --danger
 GRIS = (170, 170, 170)
@@ -44,6 +47,8 @@ class Moteur:
         self._enregistrement = None
         self._dernier_enregistrement = None
         self._test_jusqua = float("-inf")
+        self._fausse_alerte = False  # voile retenu jusqu'au prochain redressement
+        self._dernier_avachi = None  # (instant, état) du dernier moment jugé avachi
         self._precedent = None
         self._apercu = None  # (numéro, JPEG)
         self._spectateurs = 0
@@ -99,6 +104,20 @@ class Moteur:
         with self._verrou:
             self._test_jusqua = self.horloge() + duree
 
+    def signaler_fausse_alerte(self):
+        """L'utilisateur se dit droit alors que Vigie le juge avachi : on note la posture du
+        moment (pour recaler les tolérances) et on n'assombrit plus avant son redressement."""
+        with self._verrou:
+            dernier = self._dernier_avachi
+            if dernier is None or self.horloge() - dernier[0] > SOUVENIR_AVACHI:
+                raise ValueError("Rien à signaler : tu n'es pas compté avachi en ce moment.")
+            deja, self._fausse_alerte = self._fausse_alerte, True
+        etat = dernier[1]
+        if not deja:
+            self.stockage.ajouter_fausse_alerte(etat["reference"], etat["signal"], etat["niveau"],
+                                                etat["mesures"], etat["ecarts"])
+        return {"cause": etat["cause"]}
+
     def instantane(self):
         with self._verrou:
             return dict(self._etat)
@@ -120,7 +139,7 @@ class Moteur:
 
     def bilan(self, jour=None):
         """Secondes passées dans chaque état ce jour-là, y compris la minute pas encore écrite,
-        et sous "causes" le temps avachi par signal en cause."""
+        sous "causes" le temps avachi par signal en cause, et le nombre de fausses alertes."""
         jour = jour or datetime.now().strftime("%Y-%m-%d")
         bilan = collections.Counter(self.stockage.bilan(jour))
         causes = collections.Counter(self.stockage.causes(jour))
@@ -131,7 +150,8 @@ class Moteur:
             for (minute, signal), secondes in self._causes.items():
                 if minute.startswith(jour):
                     causes[signal] += secondes
-        return dict(bilan, causes=dict(causes))
+        return dict(bilan, causes=dict(causes),
+                    fausses_alertes=len(self.stockage.fausses_alertes(jour)))
 
     # --- Boucle ---
 
@@ -194,8 +214,12 @@ class Moteur:
                     etat = "non_calibre"
 
         suivi = self._suivre_enregistrement(enregistrement, maintenant) if enregistrement else None
+        with self._verrou:
+            if etat == "ok":
+                self._fausse_alerte = False
+            fausse_alerte = self._fausse_alerte
         # Pendant un enregistrement on pose devant la caméra : pas question d'assombrir.
-        niveau = self.alerte.avancer("pause" if suivi else etat, dt)
+        niveau = self.alerte.avancer("pause" if suivi or fausse_alerte else etat, dt)
         with self._verrou:
             if maintenant < self._test_jusqua:
                 niveau = self.alerte.reglages.niveau_max
@@ -207,6 +231,7 @@ class Moteur:
         with self._verrou:
             self._etat = {
                 "etat": etat,
+                "signal": evaluation.signal if evaluation else None,
                 "cause": evaluation.cause if evaluation else None,
                 "ecart": evaluation.ecart if evaluation else None,
                 "ecarts": evaluation.ecarts if evaluation else None,
@@ -219,7 +244,10 @@ class Moteur:
                 "extensions_desactivees": self.ecran.extensions_desactivees,
                 "enregistrement": suivi,
                 "dernier_enregistrement": self._dernier_enregistrement,
+                "fausse_alerte": fausse_alerte,
             }
+            if etat == "avachi":
+                self._dernier_avachi = (maintenant, self._etat)
 
     def _suivre_enregistrement(self, enregistrement, maintenant):
         """Phase de l'enregistrement en cours, ou None une fois terminé (et sauvegardé)."""

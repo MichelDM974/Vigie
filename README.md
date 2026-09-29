@@ -48,12 +48,15 @@ et l'extension en JavaScript (GJS, GNOME Shell 49-50).
   - bilan du jour : temps passé droit, avachi, absent et en pause, et temps avachi
     réparti par cause (le signal qui dépassait le plus).
 - Icône dans la barre du haut : état, interrupteur de surveillance, ouverture de la page.
+- Fausse alerte : écran assombri alors qu'on se tient droit → un clic (menu de l'icône,
+  page ou commande) retire le voile jusqu'au prochain redressement et note les mesures
+  du moment, de quoi recaler les tolérances sur les vraies erreurs.
 - Pause qui libère vraiment la caméra, pour les visios (sous Linux, une seule application
   peut filmer à la fois).
 - Réglages : tolérance générale, délai avant d'assombrir, assombrissement maximal, bouton
   de test.
 - Vie privée : aucune image n'est enregistrée (seulement les mesures des postures de
-  référence et le temps passé dans chaque état). La page n'écoute que sur 127.0.0.1.
+  référence et des fausses alertes, et le temps passé dans chaque état). La page n'écoute que sur 127.0.0.1.
 
 ## Installation
 
@@ -82,6 +85,7 @@ Commandes utiles, par exemple pour un raccourci clavier GNOME :
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m vigie basculer   # pause ↔ reprise
+PYTHONPATH=src .venv/bin/python -m vigie fausse-alerte   # « je suis droit »
 PYTHONPATH=src .venv/bin/python -m vigie etat
 ```
 

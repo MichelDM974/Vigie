@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from vigie.stockage import REGLAGES_DEFAUT, Stockage
 
 
@@ -21,6 +23,14 @@ def test_temps_cumules_par_jour(tmp_path):
     s.ajouter_temps({("2026-09-29T10:00", "ok"): 30, ("2026-09-29T10:01", "avachi"): 5})
     s.ajouter_temps({("2026-09-29T10:00", "ok"): 12, ("2026-09-30T00:00", "ok"): 60})
     assert s.bilan("2026-09-29") == {"ok": 42, "avachi": 5}
+
+
+def test_fausses_alertes_par_jour(tmp_path):
+    s = Stockage(tmp_path / "v.db")
+    s.ajouter_fausse_alerte(1, "hauteur", 0.4, {"hauteur": 0.5}, {"hauteur": 1.2})
+    [notee] = s.fausses_alertes(datetime.now().strftime("%Y-%m-%d"))
+    assert notee["signal"] == "hauteur" and notee["mesures"] == {"hauteur": 0.5}
+    assert s.fausses_alertes("2000-01-01") == []
 
 
 def test_causes_cumulees_par_jour(tmp_path):

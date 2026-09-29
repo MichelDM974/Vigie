@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from conftest import points_personne
@@ -47,6 +49,37 @@ def test_avachi_assombrit_apres_le_delai_puis_se_redresser_eclaire(banc):
     banc.detecteur.points = points_personne()
     etat = banc.avancer(1.2)  # le temps que la médiane glissante se vide
     assert etat["etat"] == "ok" and etat["niveau"] == 0
+
+
+def test_fausse_alerte_retire_le_voile_jusqu_au_redressement(banc):
+    banc.calibrer()
+    banc.detecteur.points = AVACHI
+    assert banc.avancer(40)["niveau"] > 0
+    assert banc.moteur.signaler_fausse_alerte() == {"cause": "tête qui s'enfonce dans les épaules"}
+    etat = banc.avancer(60)
+    assert etat["etat"] == "avachi" and etat["fausse_alerte"] and etat["niveau"] == 0
+    banc.moteur.signaler_fausse_alerte()  # second clic : rien de plus en base
+    [notee] = banc.stockage.fausses_alertes(datetime.now().strftime("%Y-%m-%d"))
+    assert notee["signal"] == "tete" and notee["niveau"] > 0 and notee["mesures"]["tete"] > 0
+    assert banc.moteur.bilan()["fausses_alertes"] == 1
+    banc.detecteur.points = points_personne()
+    assert not banc.avancer(1.2)["fausse_alerte"]
+    banc.detecteur.points = AVACHI
+    assert banc.avancer(40)["niveau"] > 0  # redressé puis ré-avachi : l'alerte revient
+
+
+def test_fausse_alerte_juste_apres_redressement_sinon_refusee(banc):
+    banc.calibrer()
+    with pytest.raises(ValueError):
+        banc.moteur.signaler_fausse_alerte()  # jamais jugé avachi
+    banc.detecteur.points = AVACHI
+    banc.avancer(40)
+    banc.detecteur.points = points_personne()
+    banc.avancer(5)  # redressé par réflexe avant d'atteindre le menu
+    assert banc.moteur.signaler_fausse_alerte()["cause"]
+    banc.avancer(8)
+    with pytest.raises(ValueError):
+        banc.moteur.signaler_fausse_alerte()  # redressé depuis plus de 10 s
 
 
 def test_pas_d_assombrissement_pendant_un_enregistrement(banc):

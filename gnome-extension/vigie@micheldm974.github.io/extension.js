@@ -57,6 +57,9 @@ class Indicateur extends PanelMenu.Button {
 
         this._libelle = new PopupMenu.PopupMenuItem('', {reactive: false});
         this.menu.addMenuItem(this._libelle);
+        this._fausseAlerte = new PopupMenu.PopupMenuItem('Fausse alerte : je suis droit');
+        this._fausseAlerte.connect('activate', () => extension.signalerFausseAlerte());
+        this.menu.addMenuItem(this._fausseAlerte);
         this._surveillance = new PopupMenu.PopupSwitchMenuItem('Surveillance', true);
         this._surveillance.connect('toggled', (_item, active) => extension.demanderPause(!active));
         this.menu.addMenuItem(this._surveillance);
@@ -81,6 +84,7 @@ class Indicateur extends PanelMenu.Button {
         this._surveillance.setToggleState(etat !== 'pause');
         this._surveillance.setSensitive(!arret);
         this._demarrer.visible = arret;
+        this._fausseAlerte.visible = etat === 'avachi' && niveau > 0;
     }
 });
 
@@ -174,14 +178,23 @@ export default class VigieExtension extends Extension {
     }
 
     demanderPause(pause) {
-        const message = Soup.Message.new('POST', `${URL_SERVICE}/api/pause`);
-        const corps = new TextEncoder().encode(JSON.stringify({pause}));
-        message.set_request_body_from_bytes('application/json', new GLib.Bytes(corps));
+        this._poster('/api/pause', {pause}, 'pause');
+    }
+
+    // Le service retire le voile lui-même (niveau 0 au signal suivant).
+    signalerFausseAlerte() {
+        this._poster('/api/fausse-alerte', {}, 'fausse alerte');
+    }
+
+    _poster(chemin, corps, quoi) {
+        const message = Soup.Message.new('POST', `${URL_SERVICE}${chemin}`);
+        const octets = new TextEncoder().encode(JSON.stringify(corps));
+        message.set_request_body_from_bytes('application/json', new GLib.Bytes(octets));
         this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null, (session, res) => {
             try {
                 session.send_and_read_finish(res);
             } catch (e) {
-                console.warn(`Vigie : pause impossible (${e.message})`);
+                console.warn(`Vigie : ${quoi} impossible (${e.message})`);
             }
         });
     }

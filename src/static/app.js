@@ -63,13 +63,16 @@ function afficherEtat(etat) {
   badge.textContent = `${infos.icone} ${infos.libelle}`;
 
   let detail = "";
-  if (code === "avachi") detail = `Cause principale : ${etat.cause}.`;
+  if (code === "avachi" && etat.fausse_alerte) {
+    detail = "Fausse alerte notée : pas d'assombrissement avant ton prochain redressement.";
+  } else if (code === "avachi") detail = `Cause principale : ${etat.cause}.`;
   else if (code === "ok") detail = "Posture conforme à tes références.";
   else if (code === "incertain") detail = "Tête ou épaules masquées ou hors du cadre.";
   else if (code === "non_calibre") detail = "Enregistre une première posture de référence pour commencer.";
   else if (code === "absent") detail = "Personne devant la caméra.";
   if (etat.niveau > 0) detail += ` Écran assombri à ${Math.round(etat.niveau * 100)} %.`;
   $("detail").textContent = detail;
+  $("fausse-alerte-btn").hidden = code !== "avachi" || etat.fausse_alerte;
 
   afficherVoile(etat);
   afficherSignaux(etat);
@@ -255,6 +258,17 @@ for (const [cle, format] of Object.entries(REGLAGES)) {
   });
 }
 
+$("fausse-alerte-btn").addEventListener("click", async () => {
+  $("fausse-alerte-btn").disabled = true;
+  try {
+    await api("/api/fausse-alerte", { method: "POST", body: {} });
+  } catch { /* déjà redressé depuis plus de 10 s : plus rien à signaler */ } finally {
+    $("fausse-alerte-btn").disabled = false;
+    rafraichirEtat();
+    chargerBilan();
+  }
+});
+
 $("test-btn").addEventListener("click", () => api("/api/test-assombrissement", { method: "POST" }));
 
 const bouton = $("account-menu-btn");
@@ -277,9 +291,11 @@ async function chargerBilan() {
   const bilan = await api("/api/bilan");
   const devant = (bilan.ok || 0) + (bilan.avachi || 0);
   const part = (s) => (devant ? `${Math.round((100 * (s || 0)) / devant)} % du temps devant l'écran` : "—");
+  const n = bilan.fausses_alertes || 0;
+  const fausses = n ? ` · ${n} fausse${n > 1 ? "s" : ""} alerte${n > 1 ? "s" : ""}` : "";
   const tuiles = [
     ["Droit", duree(bilan.ok || 0), part(bilan.ok), true],
-    ["Avachi", duree(bilan.avachi || 0), part(bilan.avachi), false],
+    ["Avachi", duree(bilan.avachi || 0), part(bilan.avachi) + fausses, false],
     ["Absent", duree(bilan.absent || 0), "caméra allumée, personne devant", false],
     ["En pause", duree(bilan.pause || 0), "caméra libérée", false],
   ];

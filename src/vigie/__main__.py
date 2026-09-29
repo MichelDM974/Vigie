@@ -1,4 +1,4 @@
-"""Point d'entrée : `python -m vigie [serve|pause|reprendre|basculer|etat]`."""
+"""Point d'entrée : `python -m vigie [serve|pause|reprendre|basculer|fausse-alerte|etat]`."""
 
 import argparse
 import json
@@ -56,6 +56,8 @@ def appeler(port, chemin, corps=None):
     try:
         with urllib.request.urlopen(requete, timeout=10) as reponse:
             return json.load(reponse)
+    except urllib.error.HTTPError as e:
+        sys.exit(json.load(e).get("detail", str(e)))
     except urllib.error.URLError:
         sys.exit(f"Vigie ne répond pas sur le port {port} : le service est-il lancé ?")
 
@@ -75,6 +77,8 @@ def main(argv=None):
     for nom, aide in [("pause", "met la surveillance en pause et libère la caméra"),
                       ("reprendre", "reprend la surveillance"),
                       ("basculer", "pause ↔ reprise (pour un raccourci clavier)"),
+                      ("fausse-alerte", "je suis droit : retire le voile jusqu'au redressement "
+                       "et note la posture pour recaler (pour un raccourci clavier)"),
                       ("etat", "affiche l'état courant")]:
         sous.add_parser(nom, help=aide).add_argument("--port", type=int, default=PORT)
     args = parser.parse_args(argv)
@@ -82,6 +86,9 @@ def main(argv=None):
     if args.commande == "serve":
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s : %(message)s")
         servir(args)
+    elif args.commande == "fausse-alerte":
+        cause = appeler(args.port, "/api/fausse-alerte", {})["cause"]
+        print(f"Fausse alerte notée ({cause}) : pas d'assombrissement avant ton redressement.")
     elif args.commande == "etat":
         etat = appeler(args.port, "/api/etat")
         print(etat["etat"] + (f" ({etat['cause']})" if etat.get("cause") else ""))

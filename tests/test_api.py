@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from conftest import points_personne
 from vigie.web import creer_app
 
 
@@ -49,6 +50,17 @@ def test_test_assombrissement_et_bilan(client, banc):
     assert client.post("/api/test-assombrissement").status_code == 204
     assert banc.avancer(0.4)["niveau"] > 0
     assert "non_calibre" not in client.get("/api/bilan").json()
+
+
+def test_fausse_alerte(client, banc):
+    assert client.post("/api/fausse-alerte").status_code == 409
+    banc.calibrer()
+    banc.detecteur.points = points_personne(y_oreilles=0.58, y_nez=0.56)
+    banc.avancer(2)
+    assert client.post("/api/fausse-alerte").json()["cause"]
+    banc.avancer(0.2)
+    assert client.get("/api/etat").json()["fausse_alerte"]
+    assert client.get("/api/bilan").json()["fausses_alertes"] == 1
 
 
 def test_signaux(client):

@@ -81,6 +81,13 @@ def creer_app(moteur, stockage):
     def tester():
         moteur.tester_assombrissement()
 
+    @app.post("/api/fausse-alerte")
+    def fausse_alerte():
+        try:
+            return moteur.signaler_fausse_alerte()
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+
     @app.get("/api/bilan")
     def bilan():
         return moteur.bilan()
