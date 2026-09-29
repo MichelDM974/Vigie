@@ -149,7 +149,14 @@ function afficherEnregistrement(etat) {
 
 function afficherBandeaux(etat) {
   const bandeaux = [];
-  if (etat.extension === false) {
+  if (etat.extension === false && etat.extensions_desactivees) {
+    const p = element("p", "bandeau",
+      "GNOME a désactivé les extensions utilisateur (il le fait après un plantage de GNOME Shell) : "
+      + "l'écran ne pourra pas s'assombrir. Réactive-les avec ");
+    p.append(element("code", "", "dconf write /org/gnome/shell/disable-user-extensions false"),
+      " ; si ce bandeau reste, ferme et rouvre ta session.");
+    bandeaux.push(p);
+  } else if (etat.extension === false) {
     const p = element("p", "bandeau",
       "L'extension GNOME de Vigie ne répond pas : l'écran ne pourra pas s'assombrir. Installe-la avec ");
     p.append(element("code", "", "scripts/installer.sh"), " puis ferme et rouvre ta session.");

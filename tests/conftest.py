@@ -70,6 +70,7 @@ class DetecteurTest:
 
 class EcranTest:
     disponible = True
+    extensions_desactivees = None
 
     def __init__(self):
         self.appels = []

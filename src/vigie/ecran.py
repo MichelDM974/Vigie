@@ -10,6 +10,9 @@ import time
 DESTINATION = "org.gnome.Shell"
 CHEMIN = "/io/github/micheldm974/Vigie"
 INTERFACE = "io.github.micheldm974.Vigie"
+# Mise à true par GNOME après un plantage de GNOME Shell au démarrage
+# (org.gnome.Shell-disable-extensions.service), et jamais remise à false par lui.
+CLE_DESACTIVATION = "/org/gnome/shell/disable-user-extensions"
 
 
 class Ecran:
@@ -17,6 +20,7 @@ class Ecran:
         self.battement = battement
         self.horloge = horloge
         self.disponible = None  # inconnu tant qu'aucun message n'est parti
+        self.extensions_desactivees = None  # lu seulement quand l'extension se tait
         self._dernier = None
         self._dernier_envoi = float("-inf")
 
@@ -33,6 +37,7 @@ class Ecran:
         self._dernier = (etat, niveau)
         self._dernier_envoi = maintenant
         self.disponible = self._envoyer(etat, niveau)
+        self.extensions_desactivees = None if self.disponible else self._lire_desactivation()
 
     def _envoyer(self, etat, niveau):
         commande = [
@@ -43,3 +48,11 @@ class Ecran:
             return subprocess.run(commande, capture_output=True, timeout=2).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
             return False
+
+    def _lire_desactivation(self):
+        try:
+            sortie = subprocess.run(["dconf", "read", CLE_DESACTIVATION],
+                                    capture_output=True, text=True, timeout=2)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        return sortie.stdout.strip() == "true"

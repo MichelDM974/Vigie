@@ -210,6 +210,7 @@ class Moteur:
                 "pause": pause,
                 "camera_erreur": None if pause else self.camera.erreur,
                 "extension": self.ecran.disponible,
+                "extensions_desactivees": self.ecran.extensions_desactivees,
                 "enregistrement": suivi,
                 "dernier_enregistrement": self._dernier_enregistrement,
             }

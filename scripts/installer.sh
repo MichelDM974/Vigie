@@ -29,6 +29,12 @@ print("[" + ", ".join(repr(x) for x in liste) + "]")
 EOF
 )"
 dconf write /org/gnome/shell/enabled-extensions "$activees"
+# Après un plantage de GNOME Shell au démarrage, GNOME désactive toutes les extensions
+# utilisateur et ne les réactive jamais seul : Vigie resterait sans voile.
+if [ "$(dconf read /org/gnome/shell/disable-user-extensions)" = "true" ]; then
+    dconf write /org/gnome/shell/disable-user-extensions false
+    echo "    Extensions utilisateur réactivées (GNOME les avait toutes désactivées)."
+fi
 
 echo "3/4 Service systemd utilisateur"
 mkdir -p "$(dirname "$UNITE")"

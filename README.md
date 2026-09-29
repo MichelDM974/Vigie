@@ -66,7 +66,8 @@ Le script :
 
 1. crée l'environnement Python et y installe les dépendances aux versions figées de
    `constraints.txt` ;
-2. copie et active l'extension GNOME ;
+2. copie et active l'extension GNOME, et réactive les extensions utilisateur si GNOME
+   les a toutes coupées (il le fait après un plantage de GNOME Shell au démarrage) ;
 3. installe le service systemd utilisateur `vigie.service` et le démarre.
 
 À la première installation, fermer puis rouvrir la session une fois : sous Wayland, GNOME

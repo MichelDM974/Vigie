@@ -17,6 +17,7 @@ class EcranMuet:
     """Pour une instance de test : ne jamais assombrir le vrai écran."""
 
     disponible = None
+    extensions_desactivees = None
 
     def signaler(self, etat, niveau):
         pass

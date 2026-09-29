@@ -137,6 +137,7 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
 | Symptôme | Cause et correctif |
 |---|---|
 | Bandeau « extension GNOME ne répond pas » | Extension pas encore chargée : fermer et rouvrir la session après `installer.sh`. Vérifier `gnome-extensions info vigie@micheldm974.github.io`. |
+| Bandeau « GNOME a désactivé les extensions utilisateur » | `disable-user-extensions` à `true` : mis par `org.gnome.Shell-disable-extensions.service` après un plantage du Shell au démarrage (arrivé le 02/09/2026), jamais remis à `false` par GNOME. `dconf write /org/gnome/shell/disable-user-extensions false` (ou relancer `installer.sh`) : effet immédiat si le Shell connaît déjà l'extension, sinon rouvrir la session. |
 | « Caméra indisponible » | Une autre appli filme (`fuser /dev/video0`), ou webcam débranchée. Le service réessaie toutes les 5 s. |
 | L'écran reste sombre | Impossible par conception (retrait après 6 s sans signal) ; sinon désactiver l'extension : `gnome-extensions disable vigie@micheldm974.github.io`. |
 | `smoke` : `rien ne répond` | `serve` non lancé ou autre `--port`. |
