@@ -99,6 +99,16 @@ def test_bilan_du_jour_cumule_memoire_et_base(banc):
     bilan = banc.moteur.bilan()
     assert bilan["ok"] == pytest.approx(70, abs=1)
     assert bilan["absent"] == pytest.approx(10, abs=0.5)
+    assert bilan["causes"] == {}
+
+
+def test_bilan_temps_avachi_par_signal_en_cause(banc):
+    banc.calibrer()
+    banc.detecteur.points = AVACHI
+    banc.avancer(90)  # dépasse la minute : une partie est écrite en base
+    bilan = banc.moteur.bilan()
+    assert list(bilan["causes"]) == ["tete"]
+    assert bilan["causes"]["tete"] == pytest.approx(bilan["avachi"])
 
 
 def test_apercu_seulement_avec_un_spectateur(banc):

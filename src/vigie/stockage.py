@@ -37,6 +37,12 @@ class Stockage:
                     secondes REAL NOT NULL,
                     PRIMARY KEY (minute, etat)
                 );
+                CREATE TABLE IF NOT EXISTS causes (
+                    minute TEXT NOT NULL,  -- comme temps
+                    signal TEXT NOT NULL,  -- signal qui dépasse le plus pendant « avachi »
+                    secondes REAL NOT NULL,
+                    PRIMARY KEY (minute, signal)
+                );
             """)
 
     def postures(self):
@@ -77,13 +83,19 @@ class Stockage:
                 )
         return self.reglages()
 
-    def ajouter_temps(self, cumuls):
-        """Ajoute des secondes par (minute, état) : {("2026-09-29T19:40", "ok"): 12.5, ...}."""
+    def ajouter_temps(self, cumuls, causes=None):
+        """Ajoute des secondes par (minute, état) : {("2026-09-29T19:40", "ok"): 12.5, ...},
+        et le temps avachi par (minute, signal en cause), de même forme."""
         with self._verrou, self._conn:
             self._conn.executemany(
                 """INSERT INTO temps (minute, etat, secondes) VALUES (?, ?, ?)
                    ON CONFLICT (minute, etat) DO UPDATE SET secondes = secondes + excluded.secondes""",
                 [(minute, etat, s) for (minute, etat), s in cumuls.items()],
+            )
+            self._conn.executemany(
+                """INSERT INTO causes (minute, signal, secondes) VALUES (?, ?, ?)
+                   ON CONFLICT (minute, signal) DO UPDATE SET secondes = secondes + excluded.secondes""",
+                [(minute, signal, s) for (minute, signal), s in (causes or {}).items()],
             )
 
     def bilan(self, jour):
@@ -94,3 +106,12 @@ class Stockage:
                 (jour + "T%",),
             ).fetchall()
         return {l["etat"]: l["s"] for l in lignes}
+
+    def causes(self, jour):
+        """Secondes avachi par signal en cause le jour donné (AAAA-MM-JJ)."""
+        with self._verrou:
+            lignes = self._conn.execute(
+                "SELECT signal, SUM(secondes) AS s FROM causes WHERE minute LIKE ? GROUP BY signal",
+                (jour + "T%",),
+            ).fetchall()
+        return {l["signal"]: l["s"] for l in lignes}

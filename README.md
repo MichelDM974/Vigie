@@ -45,7 +45,8 @@ et l'extension en JavaScript (GJS, GNOME Shell 49-50).
   - aperçu de la caméra en miroir avec les points suivis ;
   - état en direct et écart de chaque signal ;
   - enregistrement des postures de référence (compte à rebours, puis 3 s de capture) ;
-  - bilan du jour : temps passé droit, avachi, absent et en pause.
+  - bilan du jour : temps passé droit, avachi, absent et en pause, et temps avachi
+    réparti par cause (le signal qui dépassait le plus).
 - Icône dans la barre du haut : état, interrupteur de surveillance, ouverture de la page.
 - Pause qui libère vraiment la caméra, pour les visios (sous Linux, une seule application
   peut filmer à la fois).

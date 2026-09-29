@@ -289,6 +289,15 @@ async function chargerBilan() {
       element("p", "kpi-note", note));
     return tuile;
   }));
+  // Signal qui dépassait le plus pendant le temps avachi : celui dont la tolérance est à revoir
+  // si l'on était en fait droit.
+  const causes = Object.entries(bilan.causes || {}).sort((a, b) => b[1] - a[1]);
+  const totalCauses = causes.reduce((total, [, secondes]) => total + secondes, 0);
+  const pourcent = (s) => { const p = Math.round((100 * s) / totalCauses); return p ? `${p} %` : "< 1 %"; };
+  $("bilan-causes").hidden = !totalCauses;
+  $("bilan-causes").replaceChildren(element("span", "muted", "Temps avachi, par cause :"),
+    ...causes.map(([nom, secondes]) => element("span", "cause",
+      `${signaux[nom]?.cause || nom} · ${pourcent(secondes)}`)));
   $("bilan-date").textContent = dateCourte(new Date());
 }
 

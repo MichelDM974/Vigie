@@ -124,7 +124,10 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
   alerte. Diagnostiquer par la luminosité moyenne d'une image (un nombre),
   pas en regardant l'image.
 - **Tolérances des signaux** (`posture.SIGNAUX`) : calées sur une séance
-  réelle (commentaire au-dessus). Pour recaler, ne pas lire la page à l'œil :
+  réelle (commentaire au-dessus). Premier indice du signal trop serré :
+  `causes` de `/api/bilan` (temps avachi par signal qui dépassait le plus,
+  table `causes` minute par minute, comptée depuis le 29/09/2026 23:30).
+  Pour recaler, ne pas lire la page à l'œil :
   relever `mesures` de `/api/etat` (~5/s) pendant des phases étiquetées
   (correct plusieurs minutes, puis chaque façon de s'avachir), et recalculer
   hors ligne les écarts bruts aux postures de `data/vigie.db` (lecture seule)

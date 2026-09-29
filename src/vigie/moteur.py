@@ -48,6 +48,7 @@ class Moteur:
         self._apercu = None  # (numéro, JPEG)
         self._spectateurs = 0
         self._cumuls = collections.Counter()
+        self._causes = collections.Counter()  # temps avachi par (minute, signal en cause)
         self._dernier_vidage = horloge()
         self._etat = {"etat": "demarrage"}
         self.recharger()
@@ -118,14 +119,19 @@ class Moteur:
                 self._spectateurs -= 1
 
     def bilan(self, jour=None):
-        """Secondes passées dans chaque état ce jour-là, y compris la minute pas encore écrite."""
+        """Secondes passées dans chaque état ce jour-là, y compris la minute pas encore écrite,
+        et sous "causes" le temps avachi par signal en cause."""
         jour = jour or datetime.now().strftime("%Y-%m-%d")
         bilan = collections.Counter(self.stockage.bilan(jour))
+        causes = collections.Counter(self.stockage.causes(jour))
         with self._verrou:
             for (minute, etat), secondes in self._cumuls.items():
                 if minute.startswith(jour):
                     bilan[etat] += secondes
-        return dict(bilan)
+            for (minute, signal), secondes in self._causes.items():
+                if minute.startswith(jour):
+                    causes[signal] += secondes
+        return dict(bilan, causes=dict(causes))
 
     # --- Boucle ---
 
@@ -194,7 +200,7 @@ class Moteur:
             if maintenant < self._test_jusqua:
                 niveau = self.alerte.reglages.niveau_max
         self.ecran.signaler(etat, niveau)
-        self._compter(etat, dt, maintenant)
+        self._compter(etat, evaluation.signal if evaluation else None, dt, maintenant)
         if image is not None and spectateurs:
             self._dessiner(image, points, etat)
 
@@ -236,11 +242,13 @@ class Moteur:
         self.recharger()
         return None
 
-    def _compter(self, etat, dt, maintenant):
+    def _compter(self, etat, signal, dt, maintenant):
         if etat in ETATS_COMPTES and dt:
             minute = datetime.now().strftime("%Y-%m-%dT%H:%M")
             with self._verrou:
                 self._cumuls[(minute, etat)] += dt
+                if signal:
+                    self._causes[(minute, signal)] += dt
         if maintenant - self._dernier_vidage >= 60:
             self._vider_cumuls()
             self._dernier_vidage = maintenant
@@ -248,8 +256,9 @@ class Moteur:
     def _vider_cumuls(self):
         with self._verrou:
             cumuls, self._cumuls = self._cumuls, collections.Counter()
+            causes, self._causes = self._causes, collections.Counter()
         if cumuls:
-            self.stockage.ajouter_temps(cumuls)
+            self.stockage.ajouter_temps(cumuls, causes)
 
     def _dessiner(self, image, points, etat):
         image = image.copy()

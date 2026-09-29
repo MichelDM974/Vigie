@@ -41,6 +41,7 @@ SIGNAUX = {
 class Evaluation:
     etat: str  # "ok" ou "avachi"
     ecart: float  # plus grand écart normalisé à la référence la plus proche (> 1 : avachi)
+    signal: str | None  # signal qui dépasse le plus, si avachi
     cause: str | None
     reference: int | None  # id de la référence la plus proche
     ecarts: dict[str, float]  # écart normalisé de chaque signal à cette référence
@@ -109,5 +110,6 @@ def evaluer(mesures, references, facteur=1.0):
             meilleure = (ref_id, pire, detail)
     ref_id, pire, detail = meilleure
     avachi = pire > 1.0
-    cause = SIGNAUX[max(detail, key=detail.get)].cause if avachi else None
-    return Evaluation("avachi" if avachi else "ok", pire, cause, ref_id, detail)
+    signal = max(detail, key=detail.get) if avachi else None
+    cause = SIGNAUX[signal].cause if avachi else None
+    return Evaluation("avachi" if avachi else "ok", pire, signal, cause, ref_id, detail)

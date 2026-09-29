@@ -32,14 +32,14 @@ def test_inclinaison_independante_de_l_ordre_des_epaules():
 
 def test_meme_posture_est_ok(droit):
     ev = posture.evaluer(droit, {1: droit})
-    assert ev.etat == "ok" and ev.ecart == 0 and ev.cause is None and ev.reference == 1
+    assert ev.etat == "ok" and ev.ecart == 0 and ev.signal is ev.cause is None and ev.reference == 1
 
 
 def test_tete_qui_s_enfonce_est_avachie(droit):
     affaisse = mesures_personne(y_oreilles=0.56, y_nez=0.54)
     ev = posture.evaluer(affaisse, {1: droit})
     assert ev.etat == "avachi"
-    assert ev.cause == "tête qui s'enfonce dans les épaules"
+    assert ev.signal == "tete" and ev.cause == "tête qui s'enfonce dans les épaules"
 
 
 def test_trop_pres_de_l_ecran(droit):
