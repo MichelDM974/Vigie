@@ -1,0 +1,7 @@
+{
+  "uuid": "vigie@micheldm974.github.io",
+  "name": "Vigie",
+  "description": "Voile d'assombrissement et icône d'état pour le service Vigie (surveillance de la posture par la webcam).",
+  "shell-version": ["49", "50"],
+  "url": "https://github.com/MichelDM974/Vigie"
+}
