@@ -139,6 +139,19 @@ header .tagline {
   font-weight: 600;
 }
 
+.reglage-ecrans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reglage-ecran {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+}
+
 .reglage small {
   color: var(--muted);
   font-size: 0.8rem;

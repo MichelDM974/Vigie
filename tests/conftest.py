@@ -74,9 +74,14 @@ class EcranTest:
 
     def __init__(self):
         self.appels = []
+        self.ecrans = [{"connecteur": "HDMI-1", "nom": "S24D330"},
+                       {"connecteur": "DP-1", "nom": "Odyssey G5"}]
 
-    def signaler(self, etat, niveau):
-        self.appels.append((etat, niveau))
+    def signaler(self, etat, niveaux):
+        self.appels.append((etat, niveaux))
+
+    def lister(self):
+        return self.ecrans
 
 
 class Banc:

@@ -67,10 +67,9 @@ class Moteur:
         with self._verrou:
             self._references = references
             self._facteur = reglages["tolerance"]
-            self.alerte.reglages = ReglagesAlerte(
-                delai=reglages["delai"], rampe=reglages["rampe"],
-                niveau_max=reglages["niveau_max"],
-            )
+            self.alerte.reglages = ReglagesAlerte(delai=reglages["delai"], rampe=reglages["rampe"])
+            # Opacité maximale du voile par écran, « * » pour ceux sans réglage propre.
+            self._maxima = {"*": reglages["niveau_max"]} | reglages["ecrans"]
 
     def mettre_en_pause(self, pause):
         with self._verrou:
@@ -169,7 +168,7 @@ class Moteur:
             self._fil.join(timeout=5)
         self.camera.arreter()
         self._vider_cumuls()
-        self.ecran.signaler("arret", 0.0)
+        self.ecran.signaler("arret", {"*": 0.0})
 
     def _boucle(self):
         periode = 1 / FREQUENCE
@@ -223,8 +222,9 @@ class Moteur:
         niveau = self.alerte.avancer("pause" if suivi or fausse_alerte else etat, dt)
         with self._verrou:
             if maintenant < self._test_jusqua:
-                niveau = self.alerte.reglages.niveau_max
-        self.ecran.signaler(etat, niveau)
+                niveau = 1.0
+            maxima = self._maxima
+        self.ecran.signaler(etat, {ecran: niveau * maximum for ecran, maximum in maxima.items()})
         self._compter(etat, evaluation.signal if evaluation else None, dt, maintenant)
         if image is not None and spectateurs:
             self._dessiner(image, points, etat)
@@ -238,7 +238,7 @@ class Moteur:
                 "ecarts": evaluation.ecarts if evaluation else None,
                 "reference": evaluation.reference if evaluation else None,
                 "mesures": mesures,
-                "niveau": niveau,
+                "niveau": niveau,  # de 0 à 1 : part de l'assombrissement maximal de chaque écran
                 "pause": pause,
                 "camera_erreur": None if pause else self.camera.erreur,
                 "extension": self.ecran.disponible,

@@ -26,6 +26,7 @@ class Reglages(BaseModel):
     delai: float | None = None
     rampe: float | None = None
     niveau_max: float | None = None
+    ecrans: dict[str, float] | None = None
 
 
 def creer_app(moteur, stockage):
@@ -71,6 +72,14 @@ def creer_app(moteur, stockage):
     @app.get("/api/reglages")
     def reglages():
         return stockage.reglages()
+
+    @app.get("/api/ecrans")
+    def ecrans():
+        """Écrans branchés, de gauche à droite, avec leur assombrissement maximal."""
+        reglages = stockage.reglages()
+        maxima = reglages["ecrans"]
+        return [ecran | {"niveau_max": maxima.get(ecran["connecteur"], reglages["niveau_max"])}
+                for ecran in moteur.ecran.lister()]
 
     @app.put("/api/reglages")
     def modifier_reglages(demande: Reglages):

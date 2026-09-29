@@ -86,7 +86,11 @@ Ingrédients qui ont fait marcher le test du 29/09/2026 :
 
 - `dbus-run-session -- env -u DISPLAY -u WAYLAND_DISPLAY -u GSETTINGS_SCHEMA_DIR -u GTK_PATH -u GIO_MODULE_DIR GSETTINGS_BACKEND=keyfile XDG_DATA_DIRS="$XDG_DATA_DIRS_VSCODE_SNAP_ORIG" HOME=… XDG_DATA_HOME=… XDG_CONFIG_HOME=… XDG_RUNTIME_DIR=/run/user/1000/vigie-test …`
 - dans cette session : `gsettings set org.gnome.shell enabled-extensions "['vigie@micheldm974.github.io']"`
-  puis `gnome-shell --headless --wayland --no-x11 --virtual-monitor 1280x720 --wayland-display=vigie-test` ;
+  puis `gnome-shell --headless --wayland --no-x11 --virtual-monitor 1920x1080 --virtual-monitor 2560x1440 --wayland-display=vigie-test`
+  (deux écrans comme le vrai bureau ; connecteurs `Meta-1` à gauche, `Meta-0` à droite) ;
+- `gdbus call … --method io.github.micheldm974.Vigie.Signaler avachi "{'*': 0.2, 'Meta-0': 0.9}"`
+  (opacité par connecteur, `*` pour les autres), puis luminosité moyenne de chaque moitié
+  de la capture : un nombre par écran, pas un jugement à l'œil ;
 - attendre `GetExtensionInfo` → `state` = 1 (6 = chargée mais pas activée) ;
 - captures : `org.gnome.Shell.Screenshot` n'accepte que les appelants qui
   possèdent `org.gnome.SettingsDaemon.MediaKeys` (ou le portail GNOME) :
@@ -145,6 +149,7 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
 | Bandeau « extension GNOME ne répond pas » | Extension pas encore chargée : fermer et rouvrir la session après `installer.sh`. Vérifier `gnome-extensions info vigie@micheldm974.github.io`. |
 | Bandeau « GNOME a désactivé les extensions utilisateur » | `disable-user-extensions` à `true` : mis par `org.gnome.Shell-disable-extensions.service` après un plantage du Shell au démarrage (arrivé le 02/09/2026), jamais remis à `false` par GNOME. `dconf write /org/gnome/shell/disable-user-extensions false` (ou relancer `installer.sh`) : effet immédiat si le Shell connaît déjà l'extension, sinon rouvrir la session. |
 | « Caméra indisponible » | Une autre appli filme (`fuser /dev/video0`), ou webcam débranchée. Le service réessaie toutes les 5 s. |
+| Un écran paraît moins assombri que l'autre | Même voile partout, c'est l'écran qui rend le noir plus clair (plus lumineux, Black Equalizer…). Monter son curseur « assombrissement maximal » dans les réglages de la page. |
 | L'écran reste sombre | Impossible par conception (retrait après 6 s sans signal) ; sinon désactiver l'extension : `gnome-extensions disable vigie@micheldm974.github.io`. |
 | `smoke` : `rien ne répond` | `serve` non lancé ou autre `--port`. |
 | `ui` : `Aucun chromium` | Cache playwright vide : `playwright install chromium` depuis un venv jetable. |

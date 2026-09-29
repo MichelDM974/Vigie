@@ -46,6 +46,15 @@ def test_reglages(client, banc):
     assert client.get("/api/reglages").json()["delai"] == 4
 
 
+def test_ecrans_et_leur_assombrissement_maximal(client, banc):
+    client.put("/api/reglages", json={"niveau_max": 0.7, "ecrans": {"DP-1": 0.9}})
+    assert client.get("/api/ecrans").json() == [
+        {"connecteur": "HDMI-1", "nom": "S24D330", "niveau_max": 0.7},
+        {"connecteur": "DP-1", "nom": "Odyssey G5", "niveau_max": 0.9},
+    ]
+    assert banc.moteur._maxima == {"*": 0.7, "DP-1": 0.9}
+
+
 def test_test_assombrissement_et_bilan(client, banc):
     assert client.post("/api/test-assombrissement").status_code == 204
     assert banc.avancer(0.4)["niveau"] > 0

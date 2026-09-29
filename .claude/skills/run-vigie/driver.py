@@ -77,9 +77,11 @@ def commande_smoke(args):
     verifier("signaux", code == 200 and len(signaux) == 6, ", ".join(signaux) if code == 200 else code)
 
     _, avant = requete(args.port, "/api/reglages")
-    code, apres = requete(args.port, "/api/reglages", "PUT", {"delai": 45})
-    verifier("réglages", code == 200 and apres["delai"] == 45, apres)
+    code, apres = requete(args.port, "/api/reglages", "PUT", {"delai": 7})
+    verifier("réglages", code == 200 and apres["delai"] == 7, apres)
     requete(args.port, "/api/reglages", "PUT", avant)
+    code, ecrans = requete(args.port, "/api/ecrans")
+    verifier("écrans", code == 200 and isinstance(ecrans, list), ecrans)  # vide : --sans-ecran
 
     code, r = requete(args.port, "/api/pause", "POST", {"pause": True})
     time.sleep(0.6)

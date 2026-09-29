@@ -30,7 +30,9 @@ voile sombre descend sur l'écran, et il se lève dès que la posture redevient 
   aussitôt l'écran.
 - **Assombrissement** : sous Wayland, une application ne peut pas se placer au-dessus de
   tout, et le rétroéclairage des écrans externes ne se règle pas par logiciel. Une petite
-  extension GNOME Shell pose donc un voile sur tous les écrans. Les clics le traversent,
+  extension GNOME Shell pose donc un voile sur chaque écran, avec un assombrissement
+  maximal propre à chacun (un écran plus lumineux demande un voile plus sombre). Les clics
+  le traversent,
   et il couvre aussi les fenêtres plein écran. Le service lui parle par D-Bus. Si
   l'extension reste 6 s sans nouvelles, elle retire le voile : un service planté ne laisse
   jamais l'écran sombre.
@@ -54,7 +56,7 @@ et l'extension en JavaScript (GJS, GNOME Shell 49-50).
 - Pause qui libère vraiment la caméra, pour les visios (sous Linux, une seule application
   peut filmer à la fois).
 - Réglages : tolérance générale, délai avant d'assombrir, durée d'assombrissement,
-  assombrissement maximal, bouton de test.
+  assombrissement maximal de chaque écran, bouton de test.
 - Vie privée : aucune image n'est enregistrée (seulement les mesures des postures de
   référence et des fausses alertes, et le temps passé dans chaque état). La page n'écoute que sur 127.0.0.1.
 

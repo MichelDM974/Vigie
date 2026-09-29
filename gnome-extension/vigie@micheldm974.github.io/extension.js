@@ -1,8 +1,10 @@
 // Vigie : voile qui assombrit tous les écrans quand le service juge la posture mauvaise,
 // et icône d'état dans la barre du haut (pause, ouverture de la page).
 //
-// Le service appelle Signaler(état, niveau) sur le bus de session, au moins toutes les
-// 2 s. Sans nouvelles depuis SILENCE_MAX secondes, on considère le service arrêté et on
+// Le service appelle Signaler(état, niveaux) sur le bus de session, au moins toutes les
+// 2 s. `niveaux` donne l'opacité du voile par écran, repéré par son connecteur (« DP-1 ») :
+// chaque écran a son propre assombrissement maximal, un écran lumineux en demande plus.
+// « * » vaut pour les écrans sans réglage propre. Sans nouvelles depuis SILENCE_MAX secondes, on considère le service arrêté et on
 // retire le voile : un service planté ne doit jamais laisser l'écran sombre.
 
 import Clutter from 'gi://Clutter';
@@ -23,13 +25,14 @@ const INTERFACE_DBUS = `
   <interface name="io.github.micheldm974.Vigie">
     <method name="Signaler">
       <arg type="s" direction="in" name="etat"/>
-      <arg type="d" direction="in" name="niveau"/>
+      <arg type="a{sd}" direction="in" name="niveaux"/>
     </method>
   </interface>
 </node>`;
 const URL_SERVICE = 'http://127.0.0.1:8030';
 const SILENCE_MAX = 6;  // secondes
 const DUREE_TRANSITION = 900;  // ms
+const OPACITE_MAX = 0.95;  // jamais tout noir
 
 const LIBELLES = {
     ok: 'Bien droit',
@@ -91,19 +94,18 @@ class Indicateur extends PanelMenu.Button {
 export default class VigieExtension extends Extension {
     enable() {
         this._etat = 'arret';
-        this._niveau = 0;
+        this._niveaux = {};
+        this._parEcran = [];
+        this._voiles = [];
         this._dernierSignal = 0;
         this._unredirectCoupe = false;
         this._session = new Soup.Session({timeout: 5});
 
-        // Non réactif : les clics traversent le voile jusqu'aux fenêtres.
-        this._voile = new St.Widget({
-            style_class: 'vigie-voile', reactive: false, opacity: 0, visible: false,
+        this._creerVoiles();
+        this._moniteurs = Main.layoutManager.connect('monitors-changed', () => {
+            this._creerVoiles();
+            this._appliquer(this._etat, this._niveaux, true);
         });
-        this._voile.add_constraint(new Clutter.BindConstraint({
-            source: global.stage, coordinate: Clutter.BindCoordinate.ALL,
-        }));
-        Main.uiGroup.add_child(this._voile);
 
         this._indicateur = new Indicateur(this);
         Main.panel.addToStatusArea(this.uuid, this._indicateur);
@@ -115,7 +117,7 @@ export default class VigieExtension extends Extension {
         this._surveillant = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => {
             const silence = (GLib.get_monotonic_time() - this._dernierSignal) / 1e6;
             if (this._etat !== 'arret' && silence > SILENCE_MAX)
-                this._appliquer('arret', 0);
+                this._appliquer('arret', {});
             return GLib.SOURCE_CONTINUE;
         });
     }
@@ -126,47 +128,85 @@ export default class VigieExtension extends Extension {
         this._dbus = null;
         this._session.abort();
         this._session = null;
+        Main.layoutManager.disconnect(this._moniteurs);
         this._retablirUnredirect();
-        this._voile.destroy();
-        this._voile = null;
+        this._detruireVoiles();
         this._indicateur.destroy();
         this._indicateur = null;
     }
 
     // Méthode D-Bus, appelée par le service.
-    Signaler(etat, niveau) {
+    Signaler(etat, niveaux) {
         this._dernierSignal = GLib.get_monotonic_time();
-        this._appliquer(etat, Math.min(Math.max(niveau, 0), 0.95));
+        this._appliquer(etat, niveaux);
     }
 
-    _appliquer(etat, niveau) {
-        const changement = etat !== this._etat || Math.abs(niveau - this._niveau) > 0.005;
+    // Un voile par écran, refaits à chaque branchement ou changement de disposition.
+    _creerVoiles() {
+        this._detruireVoiles();
+        this._voiles = Main.layoutManager.monitors.map(moniteur => {
+            // Non réactif : les clics traversent le voile jusqu'aux fenêtres.
+            const voile = new St.Widget({
+                style_class: 'vigie-voile', reactive: false, opacity: 0, visible: false,
+                x: moniteur.x, y: moniteur.y, width: moniteur.width, height: moniteur.height,
+            });
+            Main.uiGroup.add_child(voile);
+            return voile;
+        });
+        this._parEcran = this._voiles.map(() => 0);
+    }
+
+    _detruireVoiles() {
+        this._voiles.forEach(voile => voile.destroy());
+        this._voiles = [];
+    }
+
+    // Opacité de chaque voile, dans l'ordre de Main.layoutManager.monitors.
+    _niveauxParEcran(niveaux) {
+        const parEcran = this._voiles.map(() => niveaux['*'] ?? 0);
+        const gestionnaire = global.backend.get_monitor_manager();
+        for (const [connecteur, niveau] of Object.entries(niveaux)) {
+            const i = connecteur === '*' ? -1 : gestionnaire.get_monitor_for_connector(connecteur);
+            if (i >= 0 && i < parEcran.length)
+                parEcran[i] = niveau;
+        }
+        return parEcran.map(niveau => Math.min(Math.max(niveau, 0), OPACITE_MAX));
+    }
+
+    _appliquer(etat, niveaux, force = false) {
+        const parEcran = this._niveauxParEcran(niveaux);
+        const changement = force || etat !== this._etat ||
+            parEcran.some((niveau, i) => Math.abs(niveau - this._parEcran[i]) > 0.005);
         this._etat = etat;
-        this._niveau = niveau;
+        this._niveaux = niveaux;
+        this._parEcran = parEcran;
         if (!changement)
             return;
-        this._indicateur.afficher(etat, niveau);
+        this._indicateur.afficher(etat, Math.max(0, ...parEcran));
 
-        if (niveau > 0) {
-            // Une fenêtre plein écran (vidéo, jeu) court-circuite la composition : on la
-            // désactive le temps du voile, sinon il resterait invisible par-dessus.
-            if (!this._unredirectCoupe) {
-                global.compositor.disable_unredirect();
-                this._unredirectCoupe = true;
-            }
-            Main.uiGroup.set_child_above_sibling(this._voile, null);
-            this._voile.show();
+        // Une fenêtre plein écran (vidéo, jeu) court-circuite la composition : on la
+        // désactive le temps du voile, sinon il resterait invisible par-dessus.
+        if (parEcran.some(niveau => niveau > 0) && !this._unredirectCoupe) {
+            global.compositor.disable_unredirect();
+            this._unredirectCoupe = true;
         }
-        this._voile.ease({
-            opacity: Math.round(niveau * 255),
-            duration: DUREE_TRANSITION,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            onStopped: isFinished => {
-                if (isFinished && this._niveau === 0 && this._voile) {
-                    this._voile.hide();
-                    this._retablirUnredirect();
-                }
-            },
+        this._voiles.forEach((voile, i) => {
+            if (parEcran[i] > 0) {
+                Main.uiGroup.set_child_above_sibling(voile, null);
+                voile.show();
+            }
+            voile.ease({
+                opacity: Math.round(parEcran[i] * 255),
+                duration: DUREE_TRANSITION,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                onStopped: isFinished => {
+                    if (!isFinished || this._parEcran[i] > 0)
+                        return;
+                    voile.hide();
+                    if (this._parEcran.every(niveau => niveau === 0))
+                        this._retablirUnredirect();
+                },
+            });
         });
     }
 

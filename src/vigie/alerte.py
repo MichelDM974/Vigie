@@ -7,11 +7,11 @@ from dataclasses import dataclass
 class ReglagesAlerte:
     delai: float = 10.0  # secondes de mauvaise posture avant d'assombrir
     rampe: float = 3.0  # secondes pour passer d'un écran normal à l'assombrissement maximal
-    niveau_max: float = 0.6  # opacité du voile, de 0 (rien) à 1 (noir)
 
 
 class Alerte:
-    """Compte le temps passé avachi et en déduit le niveau d'assombrissement.
+    """Compte le temps passé avachi et en déduit le niveau d'assombrissement, de 0 (rien) à
+    1 (assombrissement maximal, propre à chaque écran).
 
     Un bref redressement ne remet pas le compte à zéro (il décroît deux fois plus vite
     qu'il ne monte) : se redresser une seconde pour repartir aussitôt ne suffit pas.
@@ -36,7 +36,7 @@ class Alerte:
 
         if etat == "avachi" and self.mauvais > r.delai:
             progression = (self.mauvais - r.delai) / r.rampe if r.rampe > 0 else 1.0
-            self.niveau = r.niveau_max * min(1.0, progression)
+            self.niveau = min(1.0, progression)
         elif etat != "incertain":  # une main devant le visage ne rallume pas l'écran
             self.niveau = 0.0
         return self.niveau

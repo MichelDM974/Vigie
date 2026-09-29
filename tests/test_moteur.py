@@ -45,7 +45,7 @@ def test_avachi_assombrit_apres_le_delai_puis_se_redresser_eclaire(banc):
     etat = banc.avancer(9)  # délai par défaut : 10 s, médiane glissante comprise
     assert etat["etat"] == "avachi" and etat["cause"] and etat["niveau"] == 0
     assert banc.avancer(3)["niveau"] > 0
-    assert banc.ecran.appels[-1][1] > 0
+    assert banc.ecran.appels[-1][1]["*"] > 0
     banc.detecteur.points = points_personne()
     etat = banc.avancer(1.2)  # le temps que la médiane glissante se vide
     assert etat["etat"] == "ok" and etat["niveau"] == 0
@@ -120,8 +120,19 @@ def test_camera_indisponible(banc):
 def test_test_d_assombrissement(banc):
     banc.calibrer()
     banc.moteur.tester_assombrissement()
-    assert banc.avancer(1)["niveau"] == pytest.approx(0.6)
+    assert banc.avancer(1)["niveau"] == 1
     assert banc.avancer(3)["niveau"] == 0
+
+
+def test_assombrissement_maximal_propre_a_chaque_ecran(banc):
+    banc.stockage.modifier_reglages({"niveau_max": 0.5, "ecrans": {"DP-1": 0.9}})
+    banc.moteur.recharger()
+    banc.calibrer()
+    banc.moteur.tester_assombrissement()
+    banc.avancer(1)
+    assert banc.ecran.appels[-1] == ("ok", {"*": 0.5, "DP-1": 0.9})
+    banc.avancer(3)
+    assert banc.ecran.appels[-1] == ("ok", {"*": 0, "DP-1": 0})
 
 
 def test_bilan_du_jour_cumule_memoire_et_base(banc):

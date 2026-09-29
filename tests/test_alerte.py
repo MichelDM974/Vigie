@@ -11,7 +11,7 @@ def avancer(alerte, etat, secondes, dt=0.1):
 
 @pytest.fixture
 def alerte():
-    return Alerte(ReglagesAlerte(delai=30, rampe=20, niveau_max=0.6))
+    return Alerte(ReglagesAlerte(delai=30, rampe=20))
 
 
 def test_rien_avant_le_delai(alerte):
@@ -20,8 +20,8 @@ def test_rien_avant_le_delai(alerte):
 
 def test_rampe_puis_plafond(alerte):
     avancer(alerte, "avachi", 30)
-    assert avancer(alerte, "avachi", 10) == pytest.approx(0.3, abs=0.01)
-    assert avancer(alerte, "avachi", 60) == pytest.approx(0.6)
+    assert avancer(alerte, "avachi", 10) == pytest.approx(0.5, abs=0.01)
+    assert avancer(alerte, "avachi", 60) == pytest.approx(1)
 
 
 def test_se_redresser_eclaircit_aussitot(alerte):
@@ -61,12 +61,12 @@ def test_incertain_garde_l_etat(alerte):
 
 
 def test_delai_nul_assombrit_des_la_premiere_mesure():
-    alerte = Alerte(ReglagesAlerte(delai=0, rampe=20, niveau_max=0.6))
+    alerte = Alerte(ReglagesAlerte(delai=0, rampe=20))
     assert alerte.avancer("avachi", 0.2) > 0
     assert alerte.avancer("ok", 0.2) == 0 and alerte.mauvais == 0
 
 
 def test_rampe_nulle_assombrit_d_un_coup():
-    alerte = Alerte(ReglagesAlerte(delai=5, rampe=0, niveau_max=0.6))
+    alerte = Alerte(ReglagesAlerte(delai=5, rampe=0))
     assert avancer(alerte, "avachi", 4.9) == 0
-    assert avancer(alerte, "avachi", 0.2) == pytest.approx(0.6)
+    assert avancer(alerte, "avachi", 0.2) == 1

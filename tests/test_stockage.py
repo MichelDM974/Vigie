@@ -18,6 +18,12 @@ def test_reglages_bornes_et_persistants(tmp_path):
     assert Stockage(tmp_path / "v.db").reglages() == dict(REGLAGES_DEFAUT, delai=10.0, niveau_max=0.5)
 
 
+def test_reglages_par_ecran_cumules_et_bornes(tmp_path):
+    s = Stockage(tmp_path / "v.db")
+    s.modifier_reglages({"ecrans": {"DP-1": 0.9}})
+    assert s.modifier_reglages({"ecrans": {"HDMI-1": 2}})["ecrans"] == {"DP-1": 0.9, "HDMI-1": 0.95}
+
+
 def test_reglage_enregistre_hors_des_bornes_actuelles(tmp_path):
     s = Stockage(tmp_path / "v.db")
     with s._conn:  # délai enregistré quand il pouvait aller jusqu'à 600 s

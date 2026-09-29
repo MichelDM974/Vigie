@@ -70,7 +70,7 @@ function afficherEtat(etat) {
   else if (code === "incertain") detail = "Tête ou épaules masquées ou hors du cadre.";
   else if (code === "non_calibre") detail = "Enregistre une première posture de référence pour commencer.";
   else if (code === "absent") detail = "Personne devant la caméra.";
-  if (etat.niveau > 0) detail += ` Écran assombri à ${Math.round(etat.niveau * 100)} %.`;
+  if (etat.niveau > 0) detail += ` Écran assombri (${Math.round(etat.niveau * 100)} % du maximum).`;
   $("detail").textContent = detail;
   $("fausse-alerte-btn").hidden = code !== "avachi" || etat.fausse_alerte;
 
@@ -239,15 +239,37 @@ const REGLAGES = {
   tolerance: (v) => `× ${v.toFixed(1)}`,
   delai: (v) => `${v} s`,
   rampe: (v) => `${v} s`,
-  niveau_max: (v) => `${Math.round(v * 100)} %`,
 };
+const pourcentage = (v) => `${Math.round(v * 100)} %`;
 
 async function chargerReglages() {
-  const reglages = await api("/api/reglages");
+  const [reglages, ecrans] = await Promise.all([api("/api/reglages"), api("/api/ecrans")]);
   for (const [cle, format] of Object.entries(REGLAGES)) {
     $(cle).value = reglages[cle];
     $(`${cle}-val`).textContent = format(Number(reglages[cle]));
   }
+  // Écrans introuvables (Mutter muet) : un seul curseur, qui vaut pour tous.
+  const liste = ecrans.length ? ecrans : [{ nom: "Tous les écrans", niveau_max: reglages.niveau_max }];
+  $("reglage-ecrans").replaceChildren(...liste.map(creerReglageEcran));
+}
+
+function creerReglageEcran(ecran) {
+  const ligne = document.createElement("label");
+  ligne.className = "reglage-ecran";
+  const titre = document.createElement("span");
+  const valeur = document.createElement("output");
+  titre.append(ecran.connecteur ? `${ecran.nom} (${ecran.connecteur})` : ecran.nom, valeur);
+  const curseur = document.createElement("input");
+  Object.assign(curseur, { type: "range", min: 0.1, max: 0.95, step: 0.05, value: ecran.niveau_max });
+  valeur.textContent = pourcentage(ecran.niveau_max);
+  curseur.addEventListener("input", () => { valeur.textContent = pourcentage(Number(curseur.value)); });
+  curseur.addEventListener("change", () => {
+    const niveau = Number(curseur.value);
+    const corps = ecran.connecteur ? { ecrans: { [ecran.connecteur]: niveau } } : { niveau_max: niveau };
+    api("/api/reglages", { method: "PUT", body: corps });
+  });
+  ligne.append(titre, curseur);
+  return ligne;
 }
 
 for (const [cle, format] of Object.entries(REGLAGES)) {

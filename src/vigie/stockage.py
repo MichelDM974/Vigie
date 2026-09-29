@@ -9,12 +9,15 @@ REGLAGES_DEFAUT = {
     "tolerance": 1.0,  # facteur appliqué à toutes les tolérances des signaux
     "delai": 10.0,
     "rampe": 3.0,  # secondes pour atteindre l'assombrissement maximal
-    "niveau_max": 0.6,
+    "niveau_max": 0.6,  # opacité maximale du voile sur les écrans sans réglage propre
+    "ecrans": {},  # opacité maximale par écran, clé : connecteur (« DP-1 »)
 }
-BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (0.0, 10.0), "rampe": (0.0, 10.0), "niveau_max": (0.1, 0.9)}
+BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (0.0, 10.0), "rampe": (0.0, 10.0), "niveau_max": (0.1, 0.95)}
 
 
 def _borner(cle, valeur):
+    if cle == "ecrans":
+        return {ecran: _borner("niveau_max", niveau) for ecran, niveau in valeur.items()}
     bas, haut = BORNES_REGLAGES[cle]
     return min(haut, max(bas, float(valeur)))
 
@@ -87,11 +90,15 @@ class Stockage:
                 for cle, defaut in REGLAGES_DEFAUT.items()}
 
     def modifier_reglages(self, changements):
-        """Enregistre les réglages connus, ramenés dans leurs bornes ; renvoie l'ensemble."""
+        """Enregistre les réglages connus, ramenés dans leurs bornes ; renvoie l'ensemble.
+        Les réglages par écran reçus s'ajoutent à ceux déjà enregistrés."""
+        actuels = self.reglages()
         with self._verrou, self._conn:
             for cle, valeur in changements.items():
                 if cle not in REGLAGES_DEFAUT or valeur is None:
                     continue
+                if cle == "ecrans":
+                    valeur = actuels["ecrans"] | valeur
                 self._conn.execute(
                     "INSERT OR REPLACE INTO reglages (cle, valeur) VALUES (?, ?)",
                     (cle, json.dumps(_borner(cle, valeur))),

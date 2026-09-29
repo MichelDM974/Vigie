@@ -19,8 +19,11 @@ class EcranMuet:
     disponible = None
     extensions_desactivees = None
 
-    def signaler(self, etat, niveau):
+    def signaler(self, etat, niveaux):
         pass
+
+    def lister(self):
+        return []
 
 
 def servir(args):

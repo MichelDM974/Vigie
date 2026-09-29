@@ -64,8 +64,8 @@ for _ in $(seq 1 60); do
     if curl -sf http://127.0.0.1:8030/api/etat > /dev/null; then
         echo
         echo "Vigie tourne : http://127.0.0.1:8030 (enregistre-y tes postures de référence)."
-        echo "Première installation de l'extension : ferme puis rouvre ta session une fois,"
-        echo "GNOME ne charge une nouvelle extension qu'à l'ouverture de session sous Wayland."
+        echo "Extension neuve ou modifiée : ferme puis rouvre ta session une fois, GNOME ne"
+        echo "charge une nouvelle version d'extension qu'à l'ouverture de session sous Wayland."
         exit 0
     fi
     sleep 1
