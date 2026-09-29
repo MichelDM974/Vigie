@@ -1,0 +1,4 @@
+mediapipe  # tire opencv-contrib-python : ne pas ajouter d'autre paquet opencv (conflit sur cv2)
+numpy
+fastapi
+uvicorn[standard]
