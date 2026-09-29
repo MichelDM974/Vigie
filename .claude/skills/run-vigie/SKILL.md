@@ -123,8 +123,14 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
 - **Pièce sombre** : MediaPipe ne voit personne, état « absent », aucune
   alerte. Diagnostiquer par la luminosité moyenne d'une image (un nombre),
   pas en regardant l'image.
-- **Tolérances des signaux** (`posture.SIGNAUX`) : estimées, pas encore
-  calées sur de vraies données ; l'écart par signal est visible sur la page.
+- **Tolérances des signaux** (`posture.SIGNAUX`) : calées sur une séance
+  réelle (commentaire au-dessus). Pour recaler, ne pas lire la page à l'œil :
+  relever `mesures` de `/api/etat` (~5/s) pendant des phases étiquetées
+  (correct plusieurs minutes, puis chaque façon de s'avachir), et recalculer
+  hors ligne les écarts bruts aux postures de `data/vigie.db` (lecture seule)
+  pour tester plusieurs jeux de tolérances sur les mêmes données. La hauteur
+  est le signal le plus serré : elle dépend aussi de la place de la caméra
+  et de la chaise (les déplacer = ré-enregistrer les postures).
 
 ## Dépannage
 

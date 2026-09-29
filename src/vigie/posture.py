@@ -23,13 +23,17 @@ class Signal:
     cause: str  # affiché quand ce signal est celui qui dépasse le plus
 
 
+# Tolérances calées le 29/09/2026 sur une séance réelle (2 min 30 de travail normal, puis
+# affaissé, tête en avant, penché sur le côté, tête baissée) : juste au-dessus du pire
+# écart en posture correcte. La hauteur est le seul signal sans marge nette (0.083 au
+# pire en posture correcte, 0.085 affaissé la tête relevée) : 0.075 privilégie la détection.
 SIGNAUX = {
-    "tete": Signal("Tête au-dessus des épaules", 0.10, -1, "tête qui s'enfonce dans les épaules"),
-    "nez": Signal("Nez au-dessus des épaules", 0.10, -1, "tête penchée vers le bas"),
-    "hauteur": Signal("Hauteur dans l'image", 0.06, +1, "affaissé sur la chaise"),
+    "tete": Signal("Tête au-dessus des épaules", 0.12, -1, "tête qui s'enfonce dans les épaules"),
+    "nez": Signal("Nez au-dessus des épaules", 0.20, -1, "tête penchée vers le bas"),
+    "hauteur": Signal("Hauteur dans l'image", 0.075, +1, "affaissé sur la chaise"),
     "proximite": Signal("Proximité de l'écran", 0.12, +1, "trop près de l'écran"),
-    "visage": Signal("Tête en avant du buste", 0.035, +1, "tête en avant"),
-    "epaules": Signal("Inclinaison des épaules", 6.0, 0, "penché sur le côté"),
+    "visage": Signal("Tête en avant du buste", 0.06, +1, "tête en avant"),
+    "epaules": Signal("Inclinaison des épaules", 12.0, 0, "penché sur le côté"),
 }
 
 
