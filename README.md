@@ -10,8 +10,8 @@ Une remarque ou une notification s'ignore vite ; un écran qui baisse, beaucoup 
 Vigie tourne en tâche de fond dès l'ouverture de session et compare en permanence la
 posture à des **postures de référence que l'utilisateur enregistre lui-même** : droit au
 clavier, adossé en lisant, tourné vers le second écran… Tant qu'on ressemble à l'une
-d'elles, rien ne se passe. Au-delà de 30 s continues d'écart, un voile sombre descend
-sur l'écran, et il se lève dès que la posture redevient correcte.
+d'elles, rien ne se passe. Au-delà de quelques secondes d'écart continu (10 au plus), un
+voile sombre descend sur l'écran, et il se lève dès que la posture redevient correcte.
 
 ## Approche technique
 
@@ -25,8 +25,8 @@ sur l'écran, et il se lève dès que la posture redevient correcte.
 - **Comparaison** : chaque signal est ramené à sa tolérance. La posture de référence la
   plus proche fait foi, et seuls comptent les écarts dans le mauvais sens : se tenir plus
   droit que sa référence n'est jamais puni.
-- **Alerte** : il faut 30 s d'écart continu (réglable) avant que le voile ne descende, en
-  20 s. Un redressement d'une seconde ne remet pas le compte à zéro, mais éclaircit
+- **Alerte** : il faut 10 s d'écart continu (réglable de 0 à 10 s) avant que le voile ne
+  descende, en 20 s. Un redressement d'une seconde ne remet pas le compte à zéro, mais éclaircit
   aussitôt l'écran.
 - **Assombrissement** : sous Wayland, une application ne peut pas se placer au-dessus de
   tout, et le rétroéclairage des écrans externes ne se règle pas par logiciel. Une petite

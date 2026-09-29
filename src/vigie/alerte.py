@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ReglagesAlerte:
-    delai: float = 30.0  # secondes de mauvaise posture avant d'assombrir
+    delai: float = 10.0  # secondes de mauvaise posture avant d'assombrir
     rampe: float = 20.0  # secondes pour passer d'un écran normal à l'assombrissement maximal
     niveau_max: float = 0.6  # opacité du voile, de 0 (rien) à 1 (noir)
 

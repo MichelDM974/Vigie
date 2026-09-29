@@ -58,3 +58,9 @@ def test_incertain_garde_l_etat(alerte):
     niveau = avancer(alerte, "avachi", 40)
     assert avancer(alerte, "incertain", 5) == niveau
     assert alerte.mauvais == pytest.approx(40)
+
+
+def test_delai_nul_assombrit_des_la_premiere_mesure():
+    alerte = Alerte(ReglagesAlerte(delai=0, rampe=20, niveau_max=0.6))
+    assert alerte.avancer("avachi", 0.2) > 0
+    assert alerte.avancer("ok", 0.2) == 0 and alerte.mauvais == 0

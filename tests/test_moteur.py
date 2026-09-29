@@ -42,9 +42,9 @@ def test_enregistrement_rate_si_personne_n_est_vu(banc):
 def test_avachi_assombrit_apres_le_delai_puis_se_redresser_eclaire(banc):
     banc.calibrer()
     banc.detecteur.points = AVACHI
-    etat = banc.avancer(29)
+    etat = banc.avancer(9)  # délai par défaut : 10 s, médiane glissante comprise
     assert etat["etat"] == "avachi" and etat["cause"] and etat["niveau"] == 0
-    assert banc.avancer(10)["niveau"] > 0
+    assert banc.avancer(3)["niveau"] > 0
     assert banc.ecran.appels[-1][1] > 0
     banc.detecteur.points = points_personne()
     etat = banc.avancer(1.2)  # le temps que la médiane glissante se vide

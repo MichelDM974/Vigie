@@ -14,8 +14,15 @@ def test_postures(tmp_path):
 def test_reglages_bornes_et_persistants(tmp_path):
     s = Stockage(tmp_path / "v.db")
     assert s.reglages() == REGLAGES_DEFAUT
-    s.modifier_reglages({"delai": 1, "niveau_max": 0.5, "inconnu": 3, "tolerance": None})
-    assert Stockage(tmp_path / "v.db").reglages() == dict(REGLAGES_DEFAUT, delai=5.0, niveau_max=0.5)
+    s.modifier_reglages({"delai": 45, "niveau_max": 0.5, "inconnu": 3, "tolerance": None})
+    assert Stockage(tmp_path / "v.db").reglages() == dict(REGLAGES_DEFAUT, delai=10.0, niveau_max=0.5)
+
+
+def test_reglage_enregistre_hors_des_bornes_actuelles(tmp_path):
+    s = Stockage(tmp_path / "v.db")
+    with s._conn:  # délai enregistré quand il pouvait aller jusqu'à 600 s
+        s._conn.execute("INSERT INTO reglages (cle, valeur) VALUES ('delai', '30.0')")
+    assert s.reglages()["delai"] == 10.0
 
 
 def test_temps_cumules_par_jour(tmp_path):

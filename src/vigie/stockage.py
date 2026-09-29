@@ -7,10 +7,15 @@ from datetime import datetime
 
 REGLAGES_DEFAUT = {
     "tolerance": 1.0,  # facteur appliqué à toutes les tolérances des signaux
-    "delai": 30.0,
+    "delai": 10.0,
     "niveau_max": 0.6,
 }
-BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (5.0, 600.0), "niveau_max": (0.1, 0.9)}
+BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (0.0, 10.0), "niveau_max": (0.1, 0.9)}
+
+
+def _borner(cle, valeur):
+    bas, haut = BORNES_REGLAGES[cle]
+    return min(haut, max(bas, float(valeur)))
 
 
 class Stockage:
@@ -77,7 +82,8 @@ class Stockage:
         with self._verrou:
             lignes = self._conn.execute("SELECT cle, valeur FROM reglages").fetchall()
         enregistres = {l["cle"]: json.loads(l["valeur"]) for l in lignes}
-        return {cle: enregistres.get(cle, defaut) for cle, defaut in REGLAGES_DEFAUT.items()}
+        return {cle: _borner(cle, enregistres.get(cle, defaut))
+                for cle, defaut in REGLAGES_DEFAUT.items()}
 
     def modifier_reglages(self, changements):
         """Enregistre les réglages connus, ramenés dans leurs bornes ; renvoie l'ensemble."""
@@ -85,10 +91,9 @@ class Stockage:
             for cle, valeur in changements.items():
                 if cle not in REGLAGES_DEFAUT or valeur is None:
                     continue
-                bas, haut = BORNES_REGLAGES[cle]
                 self._conn.execute(
                     "INSERT OR REPLACE INTO reglages (cle, valeur) VALUES (?, ?)",
-                    (cle, json.dumps(min(haut, max(bas, float(valeur))))),
+                    (cle, json.dumps(_borner(cle, valeur))),
                 )
         return self.reglages()
 

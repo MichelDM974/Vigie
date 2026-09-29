@@ -40,10 +40,10 @@ def test_postures(client, banc):
 
 
 def test_reglages(client, banc):
-    r = client.put("/api/reglages", json={"delai": 45, "tolerance": 1.5})
-    assert r.json()["delai"] == 45 and r.json()["tolerance"] == 1.5
-    assert banc.moteur.alerte.reglages.delai == 45
-    assert client.get("/api/reglages").json()["delai"] == 45
+    r = client.put("/api/reglages", json={"delai": 4, "tolerance": 1.5})
+    assert r.json()["delai"] == 4 and r.json()["tolerance"] == 1.5
+    assert banc.moteur.alerte.reglages.delai == 4
+    assert client.get("/api/reglages").json()["delai"] == 4
 
 
 def test_test_assombrissement_et_bilan(client, banc):
