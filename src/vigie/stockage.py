@@ -1,0 +1,96 @@
+"""Base SQLite de Vigie : postures de référence, réglages, temps passé dans chaque état."""
+
+import json
+import sqlite3
+import threading
+from datetime import datetime
+
+REGLAGES_DEFAUT = {
+    "tolerance": 1.0,  # facteur appliqué à toutes les tolérances des signaux
+    "delai": 30.0,
+    "niveau_max": 0.6,
+}
+BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (5.0, 600.0), "niveau_max": (0.1, 0.9)}
+
+
+class Stockage:
+    def __init__(self, chemin):
+        chemin.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = sqlite3.connect(chemin, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        self._verrou = threading.Lock()
+        with self._verrou, self._conn:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS postures (
+                    id INTEGER PRIMARY KEY,
+                    nom TEXT NOT NULL,
+                    cree_le TEXT NOT NULL,
+                    mesures TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS reglages (
+                    cle TEXT PRIMARY KEY,
+                    valeur TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS temps (
+                    minute TEXT NOT NULL,  -- heure locale, AAAA-MM-JJTHH:MM
+                    etat TEXT NOT NULL,
+                    secondes REAL NOT NULL,
+                    PRIMARY KEY (minute, etat)
+                );
+            """)
+
+    def postures(self):
+        with self._verrou:
+            lignes = self._conn.execute("SELECT * FROM postures ORDER BY id").fetchall()
+        return [dict(ligne, mesures=json.loads(ligne["mesures"])) for ligne in lignes]
+
+    def ajouter_posture(self, nom, mesures):
+        cree_le = datetime.now().isoformat(timespec="seconds")
+        with self._verrou, self._conn:
+            cur = self._conn.execute(
+                "INSERT INTO postures (nom, cree_le, mesures) VALUES (?, ?, ?)",
+                (nom, cree_le, json.dumps(mesures)),
+            )
+        return cur.lastrowid
+
+    def supprimer_posture(self, posture_id):
+        with self._verrou, self._conn:
+            cur = self._conn.execute("DELETE FROM postures WHERE id = ?", (posture_id,))
+        return cur.rowcount > 0
+
+    def reglages(self):
+        with self._verrou:
+            lignes = self._conn.execute("SELECT cle, valeur FROM reglages").fetchall()
+        enregistres = {l["cle"]: json.loads(l["valeur"]) for l in lignes}
+        return {cle: enregistres.get(cle, defaut) for cle, defaut in REGLAGES_DEFAUT.items()}
+
+    def modifier_reglages(self, changements):
+        """Enregistre les réglages connus, ramenés dans leurs bornes ; renvoie l'ensemble."""
+        with self._verrou, self._conn:
+            for cle, valeur in changements.items():
+                if cle not in REGLAGES_DEFAUT or valeur is None:
+                    continue
+                bas, haut = BORNES_REGLAGES[cle]
+                self._conn.execute(
+                    "INSERT OR REPLACE INTO reglages (cle, valeur) VALUES (?, ?)",
+                    (cle, json.dumps(min(haut, max(bas, float(valeur))))),
+                )
+        return self.reglages()
+
+    def ajouter_temps(self, cumuls):
+        """Ajoute des secondes par (minute, état) : {("2026-09-29T19:40", "ok"): 12.5, ...}."""
+        with self._verrou, self._conn:
+            self._conn.executemany(
+                """INSERT INTO temps (minute, etat, secondes) VALUES (?, ?, ?)
+                   ON CONFLICT (minute, etat) DO UPDATE SET secondes = secondes + excluded.secondes""",
+                [(minute, etat, s) for (minute, etat), s in cumuls.items()],
+            )
+
+    def bilan(self, jour):
+        """Secondes passées dans chaque état le jour donné (AAAA-MM-JJ)."""
+        with self._verrou:
+            lignes = self._conn.execute(
+                "SELECT etat, SUM(secondes) AS s FROM temps WHERE minute LIKE ? GROUP BY etat",
+                (jour + "T%",),
+            ).fetchall()
+        return {l["etat"]: l["s"] for l in lignes}

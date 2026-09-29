@@ -30,3 +30,80 @@ def mesures_personne(**kw):
 @pytest.fixture
 def droit():
     return mesures_personne()
+
+
+class HorlogeTest:
+    def __init__(self):
+        self.t = 1000.0
+
+    def __call__(self):
+        return self.t
+
+
+class CameraTest:
+    def __init__(self):
+        import numpy as np
+
+        self.image = np.zeros((480, 640, 3), np.uint8)
+        self.erreur = None
+        self.actif = False
+        self.numero = 0
+
+    def demarrer(self):
+        self.actif = True
+
+    def arreter(self):
+        self.actif = False
+
+    def derniere(self):
+        self.numero += 1
+        return (self.numero, self.image) if self.actif else None
+
+
+class DetecteurTest:
+    def __init__(self):
+        self.points = points_personne()
+
+    def detecter(self, image, maintenant):
+        return self.points
+
+
+class EcranTest:
+    disponible = True
+
+    def __init__(self):
+        self.appels = []
+
+    def signaler(self, etat, niveau):
+        self.appels.append((etat, niveau))
+
+
+class Banc:
+    """Moteur branché sur des doublures, qu'on fait avancer pas à pas."""
+
+    def __init__(self, chemin_db):
+        from vigie.moteur import Moteur
+        from vigie.stockage import Stockage
+
+        self.horloge = HorlogeTest()
+        self.camera = CameraTest()
+        self.detecteur = DetecteurTest()
+        self.ecran = EcranTest()
+        self.stockage = Stockage(chemin_db)
+        self.moteur = Moteur(self.stockage, self.camera, self.detecteur, self.ecran, self.horloge)
+        self.camera.demarrer()
+
+    def avancer(self, secondes, dt=0.2):
+        for _ in range(round(secondes / dt)):
+            self.horloge.t += dt
+            self.moteur.etape()
+        return self.moteur.instantane()
+
+    def calibrer(self, nom="droit"):
+        self.moteur.enregistrer(nom)
+        self.avancer(6.2)
+
+
+@pytest.fixture
+def banc(tmp_path):
+    return Banc(tmp_path / "vigie.db")

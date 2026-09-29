@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vigie</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <h1>Vigie</h1>
+      <p class="tagline">Tiens-toi droit : l'écran s'assombrit quand tu t'avachis.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="pause-btn">Mettre en pause</button>
+      <div class="account-menu">
+        <button type="button" id="account-menu-btn" title="Paramètres" aria-label="Paramètres"
+                aria-expanded="false" aria-controls="settings-popup">⚙</button>
+        <div id="settings-popup" class="settings-popup" hidden>
+          <label class="reglage">
+            <span>Tolérance <output id="tolerance-val"></output></span>
+            <input type="range" id="tolerance" min="0.3" max="3" step="0.1" />
+            <small>Plus haut : il faut s'écarter davantage de ses postures pour être jugé avachi.</small>
+          </label>
+          <label class="reglage">
+            <span>Délai avant d'assombrir <output id="delai-val"></output></span>
+            <input type="range" id="delai" min="5" max="300" step="5" />
+          </label>
+          <label class="reglage">
+            <span>Assombrissement maximal <output id="niveau_max-val"></output></span>
+            <input type="range" id="niveau_max" min="0.1" max="0.9" step="0.05" />
+          </label>
+          <button type="button" class="btn-secondary" id="test-btn">Tester l'assombrissement</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="bandeaux" class="bandeaux"></div>
+
+  <main>
+    <section class="panel camera-panel">
+      <div class="panel-head">
+        <h2>Caméra</h2>
+        <span id="etat-badge" class="badge">Démarrage…</span>
+      </div>
+      <div class="apercu">
+        <img id="apercu" src="/flux.mjpg" alt="Aperçu de la caméra, en miroir" />
+        <div id="apercu-voile" class="apercu-voile" hidden>
+          <p id="apercu-titre" class="apercu-titre"></p>
+          <p id="apercu-sous-titre" class="apercu-sous-titre"></p>
+        </div>
+      </div>
+      <p id="detail" class="detail"></p>
+    </section>
+
+    <div class="colonne">
+      <section class="panel">
+        <h2>Écart à ta posture</h2>
+        <p class="hint">Chaque jauge compare un signal à ta posture de référence la plus proche.
+          Au-delà du trait, il compte comme avachi.</p>
+        <ul id="signaux" class="signaux"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Postures de référence</h2>
+        <p class="hint">Enregistre chaque posture que tu juges correcte (au clavier, en lisant,
+          tourné vers l'autre écran…) : Vigie te compare en permanence à la plus proche.</p>
+        <form id="posture-form" class="inline-form">
+          <input id="posture-nom" type="text" placeholder="Nom de la posture" maxlength="60" required />
+          <button type="submit" id="posture-btn">Enregistrer</button>
+        </form>
+        <p id="posture-statut" class="status" role="status"></p>
+        <ul id="postures" class="postures"></ul>
+      </section>
+    </div>
+
+    <section class="panel bilan-panel">
+      <h2>Aujourd'hui <span id="bilan-date" class="muted"></span></h2>
+      <div id="bilan" class="kpis"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
