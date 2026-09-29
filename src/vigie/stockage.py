@@ -8,9 +8,10 @@ from datetime import datetime
 REGLAGES_DEFAUT = {
     "tolerance": 1.0,  # facteur appliqué à toutes les tolérances des signaux
     "delai": 10.0,
+    "rampe": 3.0,  # secondes pour atteindre l'assombrissement maximal
     "niveau_max": 0.6,
 }
-BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (0.0, 10.0), "niveau_max": (0.1, 0.9)}
+BORNES_REGLAGES = {"tolerance": (0.3, 3.0), "delai": (0.0, 10.0), "rampe": (0.0, 10.0), "niveau_max": (0.1, 0.9)}
 
 
 def _borner(cle, valeur):

@@ -238,6 +238,7 @@ $("pause-btn").addEventListener("click", async () => {
 const REGLAGES = {
   tolerance: (v) => `× ${v.toFixed(1)}`,
   delai: (v) => `${v} s`,
+  rampe: (v) => `${v} s`,
   niveau_max: (v) => `${Math.round(v * 100)} %`,
 };
 

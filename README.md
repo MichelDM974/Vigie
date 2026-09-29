@@ -26,7 +26,7 @@ voile sombre descend sur l'écran, et il se lève dès que la posture redevient 
   plus proche fait foi, et seuls comptent les écarts dans le mauvais sens : se tenir plus
   droit que sa référence n'est jamais puni.
 - **Alerte** : il faut 10 s d'écart continu (réglable de 0 à 10 s) avant que le voile ne
-  descende, en 20 s. Un redressement d'une seconde ne remet pas le compte à zéro, mais éclaircit
+  descende, en 3 s (réglable de 0 à 10 s). Un redressement d'une seconde ne remet pas le compte à zéro, mais éclaircit
   aussitôt l'écran.
 - **Assombrissement** : sous Wayland, une application ne peut pas se placer au-dessus de
   tout, et le rétroéclairage des écrans externes ne se règle pas par logiciel. Une petite
@@ -53,8 +53,8 @@ et l'extension en JavaScript (GJS, GNOME Shell 49-50).
   du moment, de quoi recaler les tolérances sur les vraies erreurs.
 - Pause qui libère vraiment la caméra, pour les visios (sous Linux, une seule application
   peut filmer à la fois).
-- Réglages : tolérance générale, délai avant d'assombrir, assombrissement maximal, bouton
-  de test.
+- Réglages : tolérance générale, délai avant d'assombrir, durée d'assombrissement,
+  assombrissement maximal, bouton de test.
 - Vie privée : aucune image n'est enregistrée (seulement les mesures des postures de
   référence et des fausses alertes, et le temps passé dans chaque état). La page n'écoute que sur 127.0.0.1.
 

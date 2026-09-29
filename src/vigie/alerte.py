@@ -6,7 +6,7 @@ from dataclasses import dataclass
 @dataclass
 class ReglagesAlerte:
     delai: float = 10.0  # secondes de mauvaise posture avant d'assombrir
-    rampe: float = 20.0  # secondes pour passer d'un écran normal à l'assombrissement maximal
+    rampe: float = 3.0  # secondes pour passer d'un écran normal à l'assombrissement maximal
     niveau_max: float = 0.6  # opacité du voile, de 0 (rien) à 1 (noir)
 
 
@@ -35,7 +35,8 @@ class Alerte:
             self.mauvais = 0.0
 
         if etat == "avachi" and self.mauvais > r.delai:
-            self.niveau = r.niveau_max * min(1.0, (self.mauvais - r.delai) / r.rampe)
+            progression = (self.mauvais - r.delai) / r.rampe if r.rampe > 0 else 1.0
+            self.niveau = r.niveau_max * min(1.0, progression)
         elif etat != "incertain":  # une main devant le visage ne rallume pas l'écran
             self.niveau = 0.0
         return self.niveau

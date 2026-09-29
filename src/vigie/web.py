@@ -24,6 +24,7 @@ class Pause(BaseModel):
 class Reglages(BaseModel):
     tolerance: float | None = None
     delai: float | None = None
+    rampe: float | None = None
     niveau_max: float | None = None
 
 

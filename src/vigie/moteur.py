@@ -68,7 +68,8 @@ class Moteur:
             self._references = references
             self._facteur = reglages["tolerance"]
             self.alerte.reglages = ReglagesAlerte(
-                delai=reglages["delai"], niveau_max=reglages["niveau_max"]
+                delai=reglages["delai"], rampe=reglages["rampe"],
+                niveau_max=reglages["niveau_max"],
             )
 
     def mettre_en_pause(self, pause):
