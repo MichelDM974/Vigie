@@ -39,7 +39,7 @@ def test_tete_qui_s_enfonce_est_avachie(droit):
     affaisse = mesures_personne(y_oreilles=0.56, y_nez=0.54)
     ev = posture.evaluer(affaisse, {1: droit})
     assert ev.etat == "avachi"
-    assert ev.signal == "tete" and ev.cause == "tête qui s'enfonce dans les épaules"
+    assert ev.signal == "tete" and ev.cause == "tête en avant ou qui s'enfonce"
 
 
 def test_trop_pres_de_l_ecran(droit):

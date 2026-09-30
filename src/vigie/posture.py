@@ -27,9 +27,14 @@ class Signal:
 # affaissé, tête en avant, penché sur le côté, tête baissée) : juste au-dessus du pire
 # écart en posture correcte. La hauteur est le seul signal sans marge nette (0.083 au
 # pire en posture correcte, 0.085 affaissé la tête relevée) : 0.075 privilégie la détection.
+# Tête et nez resserrés le 30/09/2026 (0.12 → 0.07, 0.20 → 0.14) : de face, la tête qui
+# avance ne s'approche que de 2 à 3 cm, elle se voit surtout parce qu'elle descend vers les
+# épaules (« visage » ne bouge presque pas). Tête légèrement avancée ≈ 0.056 sur « tete » ;
+# 80 % détectée sur un relevé étiqueté, au prix de fausses alertes possibles en baissant
+# les yeux (clavier, téléphone), à juger par les fausses alertes signalées.
 SIGNAUX = {
-    "tete": Signal("Tête au-dessus des épaules", 0.12, -1, "tête qui s'enfonce dans les épaules"),
-    "nez": Signal("Nez au-dessus des épaules", 0.20, -1, "tête penchée vers le bas"),
+    "tete": Signal("Tête au-dessus des épaules", 0.07, -1, "tête en avant ou qui s'enfonce"),
+    "nez": Signal("Nez au-dessus des épaules", 0.14, -1, "tête penchée vers le bas"),
     "hauteur": Signal("Hauteur dans l'image", 0.075, +1, "affaissé sur la chaise"),
     "proximite": Signal("Proximité de l'écran", 0.12, +1, "trop près de l'écran"),
     "visage": Signal("Tête en avant du buste", 0.06, +1, "tête en avant"),

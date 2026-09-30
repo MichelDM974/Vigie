@@ -57,7 +57,7 @@ def test_fausse_alerte_retire_le_voile_jusqu_au_redressement(banc):
     banc.calibrer()
     banc.detecteur.points = AVACHI
     assert banc.avancer(40)["niveau"] > 0
-    assert banc.moteur.signaler_fausse_alerte() == {"cause": "tête qui s'enfonce dans les épaules"}
+    assert banc.moteur.signaler_fausse_alerte() == {"cause": "tête en avant ou qui s'enfonce"}
     etat = banc.avancer(60)
     assert etat["etat"] == "avachi" and etat["fausse_alerte"] and etat["niveau"] == 0
     banc.moteur.signaler_fausse_alerte()  # second clic : rien de plus en base
