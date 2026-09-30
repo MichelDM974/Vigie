@@ -31,7 +31,10 @@ const INTERFACE_DBUS = `
 </node>`;
 const URL_SERVICE = 'http://127.0.0.1:8030';
 const SILENCE_MAX = 6;  // secondes
-const DUREE_TRANSITION = 900;  // ms
+// Assombrir en fondu sur l'intervalle entre deux signaux du service (5 par seconde) : une
+// rampe de quelques secondes reste fluide, une rampe de 0 s assombrit d'un coup. Éclaircir
+// se fait toujours d'un coup : un redressement doit se voir aussitôt.
+const DUREE_ASSOMBRISSEMENT = 200;  // ms
 const OPACITE_MAX = 0.95;  // jamais tout noir
 
 const LIBELLES = {
@@ -191,13 +194,14 @@ export default class VigieExtension extends Extension {
             this._unredirectCoupe = true;
         }
         this._voiles.forEach((voile, i) => {
+            const opacite = Math.round(parEcran[i] * 255);
             if (parEcran[i] > 0) {
                 Main.uiGroup.set_child_above_sibling(voile, null);
                 voile.show();
             }
             voile.ease({
-                opacity: Math.round(parEcran[i] * 255),
-                duration: DUREE_TRANSITION,
+                opacity: opacite,
+                duration: opacite < voile.opacity ? 0 : DUREE_ASSOMBRISSEMENT,
                 mode: Clutter.AnimationMode.EASE_OUT_QUAD,
                 onStopped: isFinished => {
                     if (!isFinished || this._parEcran[i] > 0)

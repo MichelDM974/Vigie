@@ -47,8 +47,10 @@ def test_avachi_assombrit_apres_le_delai_puis_se_redresser_eclaire(banc):
     assert banc.avancer(3)["niveau"] > 0
     assert banc.ecran.appels[-1][1]["*"] > 0
     banc.detecteur.points = points_personne()
-    etat = banc.avancer(1.2)  # le temps que la médiane glissante se vide
+    assert banc.avancer(0.2)["niveau"] > 0  # une bonne mesure isolée peut être aberrante
+    etat = banc.avancer(0.2)  # la deuxième emporte la médiane glissante
     assert etat["etat"] == "ok" and etat["niveau"] == 0
+    assert banc.ecran.appels[-1][1]["*"] == 0
 
 
 def test_fausse_alerte_retire_le_voile_jusqu_au_redressement(banc):

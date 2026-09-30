@@ -13,6 +13,9 @@ from . import posture
 from .alerte import Alerte, ReglagesAlerte
 
 FREQUENCE = 5  # analyses par seconde : assez pour une posture, léger pour le processeur
+# Mesures de la médiane glissante (0,6 s) : une image aberrante ne fait pas basculer l'état,
+# et un redressement se voit dès la deuxième bonne mesure (~0,3 s, contre ~0,5 s sur 5).
+LISSAGE = 3
 DUREE_PREPARATION = 3.0  # compte à rebours avant d'enregistrer une posture
 DUREE_CAPTURE = 3.0
 MESURES_MIN = 5  # images exploitables exigées pendant la capture
@@ -43,7 +46,7 @@ class Moteur:
         self._arret = threading.Event()
         self._fil = None
         self._pause = False
-        self._historique = collections.deque(maxlen=FREQUENCE)  # ~1 s de mesures
+        self._historique = collections.deque(maxlen=LISSAGE)
         self._enregistrement = None
         self._dernier_enregistrement = None
         self._test_jusqua = float("-inf")

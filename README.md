@@ -1,7 +1,7 @@
 # Vigie
 
 Surveillance de la posture par la webcam, sur un bureau Linux (GNOME) : quand on reste
-avachi trop longtemps, l'écran s'assombrit peu à peu, et redevient normal dès qu'on se
+avachi trop longtemps, l'écran s'assombrit, et redevient normal d'un coup dès qu'on se
 redresse.
 
 ## Le concept
@@ -21,13 +21,14 @@ voile sombre descend sur l'écran, et il se lève dès que la posture redevient 
 - **Signaux de posture** : une caméra de face ne voit pas la courbure du dos, seulement
   ses conséquences. Vigie en tire six rapports sans unité : tête et nez au-dessus des
   épaules, hauteur de la tête dans l'image, proximité de l'écran, tête en avant du buste,
-  inclinaison des épaules. Ils sont lissés par une médiane glissante sur 1 s.
+  inclinaison des épaules. Ils sont lissés par une médiane glissante sur 0,6 s (3 mesures) :
+  un redressement se voit en ~0,3 s.
 - **Comparaison** : chaque signal est ramené à sa tolérance. La posture de référence la
   plus proche fait foi, et seuls comptent les écarts dans le mauvais sens : se tenir plus
   droit que sa référence n'est jamais puni.
 - **Alerte** : il faut 10 s d'écart continu (réglable de 0 à 10 s) avant que le voile ne
-  descende, en 3 s (réglable de 0 à 10 s). Un redressement d'une seconde ne remet pas le compte à zéro, mais éclaircit
-  aussitôt l'écran.
+  descende, en 3 s (réglable de 0 à 10 s, 0 = d'un coup). Un redressement d'une seconde ne
+  remet pas le compte à zéro, mais éclaircit l'écran aussitôt et d'un coup, sans fondu.
 - **Assombrissement** : sous Wayland, une application ne peut pas se placer au-dessus de
   tout, et le rétroéclairage des écrans externes ne se règle pas par logiciel. Une petite
   extension GNOME Shell pose donc un voile sur chaque écran, avec un assombrissement
