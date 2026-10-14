@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vigie</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/static/vendor/inter/InterVariable.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <header>
     <div class="header-title">
-      <h1>Vigie</h1>
+      <h1><a href="/"><img class="logo" src="/static/favicon.svg" width="40" height="40" alt="">Vigie</a></h1>
       <p class="tagline">Tiens-toi droit : l'écran s'assombrit quand tu t'avachis.</p>
     </div>
     <div class="header-actions">
-      <button type="button" id="pause-btn">Mettre en pause</button>
+      <button type="button" class="btn-secondary" id="pause-btn">Mettre en pause</button>
       <div class="account-menu">
         <button type="button" id="account-menu-btn" title="Paramètres" aria-label="Paramètres"
                 aria-expanded="false" aria-controls="settings-popup">⚙</button>
@@ -68,16 +69,17 @@
 
     <div class="colonne">
       <section class="panel">
-        <h2>Écart à ta posture</h2>
-        <p class="hint">Chaque jauge compare un signal à ta posture de référence la plus proche.
-          Au-delà du trait, il compte comme avachi.</p>
+        <h2>Écart à ta posture <button type="button" class="help-btn" aria-controls="aide-ecart">?</button></h2>
+        <p class="hint help-text" id="aide-ecart" hidden>Chaque jauge compare un signal à ta posture
+          de référence la plus proche. Au-delà du trait, il compte comme avachi.</p>
         <ul id="signaux" class="signaux"></ul>
       </section>
 
       <section class="panel">
-        <h2>Postures de référence</h2>
-        <p class="hint">Enregistre chaque posture que tu juges correcte (au clavier, en lisant,
-          tourné vers l'autre écran…) : Vigie te compare en permanence à la plus proche.</p>
+        <h2>Postures de référence <button type="button" class="help-btn" aria-controls="aide-postures">?</button></h2>
+        <p class="hint help-text" id="aide-postures" hidden>Enregistre chaque posture que tu juges
+          correcte (au clavier, en lisant, tourné vers l'autre écran…) : Vigie te compare en
+          permanence à la plus proche.</p>
         <form id="posture-form" class="inline-form">
           <input id="posture-nom" type="text" placeholder="Nom de la posture" maxlength="60" required />
           <button type="submit" id="posture-btn">Enregistrer</button>
@@ -94,6 +96,7 @@
     </section>
   </main>
 
+  <script src="/static/common.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -1,32 +1,46 @@
 :root {
   color-scheme: dark;
-  /* Fond noir teinté, halo sarcelle en haut à gauche qui s'éteint vers le bas ;
-     panneaux translucides par-dessus (même structure que les autres projets). */
-  --bg: #010404;
-  --bg-top: #061816;
-  --bg-glow: rgba(46, 196, 182, 0.34);
-  --bg-glow-2: rgba(46, 196, 182, 0.08);
-  --panel: rgba(20, 28, 27, 0.72);
-  --panel-2: rgba(42, 50, 49, 0.9);
-  --border: rgba(161, 228, 222, 0.13);
-  --text: #efeff2;
-  --muted: #a3a3ad;
+  /* Style commun épuré (skill nouveau-projet, modèle CryptX) : fond noir, halo sarcelle
+     en haut à gauche qui s'éteint vers le bas ; panneaux opaques à peine plus clairs,
+     bordés d'un filet presque invisible. Valeurs dérivées de l'accent, en dur. */
+  --bg: #070909;
+  --bg-top: #081614;
+  --bg-glow: rgba(46, 196, 182, 0.22);
+  --bg-glow-2: rgba(46, 196, 182, 0.06);
+  --panel: #111313;
+  --panel-2: #191e1d;
+  --border: rgba(234, 249, 248, 0.08);
+  --text: #eef2f2;
+  --muted: #919998;
+  /* Accent réservé : la marque, le bouton principal, la posture la plus proche. Le reste
+     est neutre. */
   --accent: #2ec4b6;
-  --accent-soft: rgba(46, 196, 182, 0.16);
-  --accent-text: #031211;
-  --disabled-bg: #45454d;
-  --shadow: rgba(0, 0, 0, 0.4);
-  --inset: rgba(0, 0, 0, 0.22);  /* fond des champs, cartes internes et bouts de code */
-  --muted-soft: rgba(163, 163, 173, 0.14);
-  --voile: rgba(1, 4, 4, 0.72);  /* --bg translucide, par-dessus l'aperçu caméra */
-  --voile-leger: rgba(1, 4, 4, 0.35);
+  --accent-soft: rgba(46, 196, 182, 0.14);
+  --accent-text: #020807;
+  --disabled-bg: #353a39;
+  --shadow: rgba(0, 0, 0, 0.35);
+  --popup-bg: rgba(17, 19, 19, 0.86);  /* --panel, sous ce qui flotte (popup, bulle) */
+  --row-hover: rgba(234, 249, 248, 0.035);
+  --voile: rgba(7, 9, 9, 0.72);  /* --bg translucide, par-dessus l'aperçu caméra */
+  --voile-leger: rgba(7, 9, 9, 0.35);
   /* Statuts : réservés aux états de posture, toujours accompagnés d'un libellé. */
-  --good: #0ca30c;
-  --good-soft: rgba(12, 163, 12, 0.16);
+  --good: #34c77b;
+  --good-soft: rgba(52, 199, 123, 0.14);
   --warning: #d9a21b;
-  --warning-soft: rgba(217, 162, 27, 0.16);
-  --danger: #e66767;
-  --danger-soft: rgba(230, 103, 103, 0.16);
+  --warning-soft: rgba(217, 162, 27, 0.14);
+  --danger: #f0686b;
+  --danger-soft: rgba(240, 104, 107, 0.14);
+  /* Marge latérale : le contenu de l'en-tête s'aligne sur celui de la page (1216 px au plus). */
+  --pad: max(32px, calc((100% - 1216px) / 2));
+}
+
+/* Inter 4 (SIL OFL 1.1), servie localement : pas de dépendance à un site externe. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("vendor/inter/InterVariable.woff2") format("woff2");
 }
 
 * { box-sizing: border-box; }
@@ -36,75 +50,68 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
   background-color: var(--bg);
   background-image:
-    radial-gradient(ellipse 75% 50% at 0% 0%, var(--bg-glow), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, var(--bg-glow-2), transparent 70%),
-    linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 55%);
+    radial-gradient(ellipse 100% 70% at 0% 0%, var(--bg-glow), transparent 70%),
+    radial-gradient(ellipse 80% 55% at 100% 0%, var(--bg-glow-2), transparent 70%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 70%);
   background-attachment: fixed;
   color: var(--text);
 }
 
-/* --- En-tête --- */
+button, input, select { font-family: inherit; }
+
+/* --- En-tête compact : titre à gauche, pause et ⚙ à droite (une seule page, pas de
+   sélecteur de pages). --- */
 
 header {
-  padding: 28px 32px 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  padding: 18px var(--pad) 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
   gap: 16px;
 }
 
 header h1 {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: 1.6rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--accent);
 }
+header h1 a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3em; }
+/* Logo (le favicon) devant le titre : en em, il suit la taille du titre sur téléphone. */
+header h1 .logo { width: 0.95em; height: 0.95em; flex: none; }
 
 header .tagline {
-  margin: 6px 0 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  margin: 3px 0 0;
+  font-size: 0.78rem;
   color: var(--muted);
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
+.header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 
-.account-menu {
-  position: relative;
-  flex-shrink: 0;
-}
+.account-menu { position: relative; flex-shrink: 0; }
 
 #account-menu-btn {
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid var(--border);
-  width: 38px;
-  height: 38px;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   line-height: 1;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px var(--shadow);
 }
 
 #account-menu-btn:hover,
-#account-menu-btn[aria-expanded="true"] {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
-}
+#account-menu-btn[aria-expanded="true"] { background: var(--panel-2); color: var(--text); }
 
 .settings-popup {
   position: absolute;
@@ -112,11 +119,12 @@ header .tagline {
   right: 0;
   z-index: 20;
   width: 300px;
-  background: var(--panel-2);
+  background: var(--popup-bg);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 6px 14px var(--shadow);
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 12px 32px var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -126,7 +134,7 @@ header .tagline {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .reglage span {
@@ -135,8 +143,9 @@ header .tagline {
 }
 
 .reglage output {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .reglage-ecrans {
@@ -154,7 +163,7 @@ header .tagline {
 
 .reglage small {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   line-height: 1.4;
 }
 
@@ -169,59 +178,50 @@ button {
   background: var(--accent);
   color: var(--accent-text);
   border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 9px 18px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border-radius: 9px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 6px var(--shadow);
 }
-
-button:hover { filter: brightness(1.1); }
 
 button:disabled {
   background: var(--disabled-bg);
   border-color: var(--disabled-bg);
   color: var(--muted);
-  cursor: not-allowed;
-  filter: none;
+  cursor: default;
 }
 
+/* Bouton secondaire : neutre, l'accent plein reste au bouton principal. */
 .btn-secondary {
   background: transparent;
-  color: var(--accent);
-  box-shadow: none;
+  border-color: var(--border);
+  color: var(--text);
 }
 
-.btn-secondary:hover {
-  background: var(--accent-soft);
-  filter: none;
-}
+.btn-secondary:hover { background: var(--panel-2); }
 
 .btn-petit {
-  padding: 5px 12px;
-  font-size: 0.85rem;
+  padding: 4px 11px;
+  font-size: 0.82rem;
 }
 
 input[type="text"] {
-  background: var(--inset);
+  background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 0.95rem;
+  padding: 8px 12px;
+  font-size: 0.92rem;
 }
 
-input[type="text"]:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+input[type="text"]:hover { border-color: var(--muted); }
+input[type="text"]:focus { outline: none; border-color: var(--muted); }
 
-/* --- Bandeaux d'avertissement --- */
+/* --- Bandeaux d'avertissement (extension, caméra) : une alerte, en orange. --- */
 
 .bandeaux {
-  padding: 0 32px;
+  padding: 0 var(--pad);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -230,15 +230,15 @@ input[type="text"]:focus {
 .bandeau {
   margin: 0;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--warning-soft);
-  border: 1px solid var(--warning);
-  font-size: 0.9rem;
+  border-left: 3px solid var(--warning);
+  font-size: 0.88rem;
   line-height: 1.5;
 }
 
 .bandeau code {
-  background: var(--inset);
+  background: var(--panel-2);
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -246,7 +246,9 @@ input[type="text"]:focus {
 /* --- Mise en page --- */
 
 main {
-  padding: 16px 32px 40px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 32px 56px;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 20px;
@@ -257,6 +259,7 @@ main {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .bilan-panel { grid-column: 1 / -1; }
@@ -264,15 +267,16 @@ main {
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 4px 16px var(--shadow);
-  backdrop-filter: blur(6px);
+  border-radius: 14px;
+  padding: 24px 28px;
+  min-width: 0;
 }
 
 .panel h2 {
-  margin: 0 0 12px;
-  font-size: 1.15rem;
+  margin: 0 0 14px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .panel-head {
@@ -280,7 +284,7 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .panel-head h2 { margin: 0; }
@@ -288,7 +292,7 @@ main {
 .hint {
   margin: 0 0 14px;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   line-height: 1.5;
 }
 
@@ -300,33 +304,34 @@ main {
 .status {
   min-height: 1.2em;
   margin: 8px 0 0;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: var(--muted);
 }
 
+.status:empty { display: none; }
 .status--ok { color: var(--good); }
 .status--erreur { color: var(--danger); }
 
-/* --- Badge d'état --- */
+/* --- Pastille d'état : neutre, sauf les états de posture (statuts). --- */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid transparent;
+  white-space: nowrap;
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 
-.badge--ok { background: var(--good-soft); color: var(--good); border-color: var(--good); }
-.badge--avachi { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
-.badge--incertain { background: var(--warning-soft); color: var(--warning); border-color: var(--warning); }
-.badge--sans_camera { background: var(--danger-soft); color: var(--danger); }
-.badge--absent { background: var(--muted-soft); color: var(--muted); }
+.badge--ok { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.badge--avachi { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+.badge--incertain { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
+.badge--sans_camera { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
 
 /* --- Aperçu caméra --- */
 
@@ -362,9 +367,9 @@ main {
 
 .apercu-titre {
   margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .apercu-sous-titre {
@@ -372,6 +377,7 @@ main {
   font-size: 3rem;
   font-weight: 800;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .apercu-sous-titre:empty { display: none; }
@@ -389,7 +395,7 @@ main {
   margin: 0;
   min-height: 1.3em;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 /* --- Jauges d'écart par signal --- */
@@ -425,7 +431,7 @@ main {
   position: relative;
   height: 8px;
   border-radius: 4px;
-  background: var(--accent-soft);
+  background: var(--panel-2);
 }
 
 .jauge-remplie {
@@ -456,7 +462,7 @@ main {
   font-size: 0.88rem;
 }
 
-/* --- Postures de référence --- */
+/* --- Postures de référence : lignes séparées d'un filet, pas de cartes. --- */
 
 .inline-form {
   display: flex;
@@ -467,27 +473,20 @@ main {
 
 .postures {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .posture {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--inset);
-  border: 1px solid var(--border);
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.posture--active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
+.posture:last-child { border-bottom: 0; }
+.posture:hover { background: var(--row-hover); }
 
 .posture-texte { flex: 1; min-width: 0; }
 
@@ -498,49 +497,46 @@ main {
 
 .posture-date {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
+/* La posture la plus proche : la ligne choisie, seul accent du panneau. */
 .posture-proche {
   color: var(--accent);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
 }
 
-/* --- Bilan du jour --- */
+/* --- Bilan du jour : chiffres clés en une rangée sans cadre. --- */
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 18px 24px;
 }
 
-.kpi {
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: var(--inset);
-  border: 1px solid var(--border);
-}
+.kpi { min-width: 0; }
 
 .kpi-libelle {
   margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .kpi-valeur {
-  margin: 4px 0 2px;
-  font-size: 1.6rem;
-  font-weight: 700;
+  margin: 2px 0 2px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
-
-.kpi--principal .kpi-valeur { color: var(--accent); }
 
 .kpi-note {
   margin: 0;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .bilan-causes {
@@ -548,18 +544,67 @@ main {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin: 14px 0 0;
-  font-size: 0.85rem;
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
 }
 
 .cause {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--danger-soft);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
 }
 
+/* --- Aides (common.js) --- */
+
+/* Bulle d'aide, à la place de l'infobulle native des attributs title. */
+.tip {
+  position: fixed;
+  z-index: 100;
+  max-width: 340px;
+  padding: 8px 12px;
+  background: var(--popup-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px var(--shadow);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: pre-line;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+/* Explication d'un panneau derrière un « ? » à côté de son titre. */
+button.help-btn {
+  width: 22px; height: 22px; padding: 0; margin-left: 6px; border-radius: 50%; vertical-align: 2px;
+  font-size: 0.8rem; font-weight: 700; line-height: 1;
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+}
+button.help-btn:hover, button.help-btn.active { background: var(--panel-2); color: var(--text); }
+.panel h2 + .help-text { margin: -6px 0 14px; }
+
 @media (max-width: 900px) {
-  header, .bandeaux, main { padding-left: 16px; padding-right: 16px; }
-  header { flex-wrap: wrap; }
+  header, main { padding-left: 16px; padding-right: 16px; }
+  .bandeaux { padding: 0 16px; }
+  header .tagline { display: none; }
   main { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Téléphone : marges resserrées, chiffres du bilan sur deux colonnes. */
+@media (max-width: 700px) {
+  header { padding: 12px; gap: 10px 12px; }
+  header h1 { font-size: 1.4rem; }
+  #account-menu-btn { width: 34px; height: 34px; font-size: 1.05rem; }
+  .bandeaux { padding: 0 10px; }
+  main { padding: 10px 10px 48px; gap: 14px; }
+  .colonne { gap: 14px; }
+  .panel { padding: 14px 12px; border-radius: 10px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-valeur { font-size: 1.25rem; }
 }
