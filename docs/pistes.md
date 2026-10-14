@@ -1,7 +1,7 @@
 # Profil de proposition : Vigie
 
 Ce qu'est une bonne piste pour Vigie. Lu par le bouton « Proposer des
-pistes » de jdb (`journal-de-bord/scripts/machine.py`) : une règle de
+pistes » de cdc (`centre-de-controle/scripts/machine.py`) : une règle de
 proposition se change ici, pas dans sa consigne.
 
 Le bouton lit ce fichier par programme : garder les quatre titres de rubrique
