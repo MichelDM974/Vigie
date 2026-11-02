@@ -51,7 +51,12 @@ Arrêter : `fuser -k 8031/tcp`.
 .venv/bin/python .claude/skills/run-vigie/driver.py ui --out /tmp/vigie-captures
 ```
 
-Chromium de `~/.cache/ms-playwright` en `--screenshot`. **La regarder** :
+Chromium de `~/.cache/ms-playwright` (à défaut son chrome-headless-shell),
+piloté par le protocole DevTools sur un tube (`--remote-debugging-pipe`,
+stdlib, classes reprises de run-cdc) ; ni playwright ni `--screenshot`, qui
+se fige. Le flux MJPEG de l'aperçu ne finit jamais : pas d'attente de
+`load`, capture dès que le badge a quitté « Démarrage… » (3 s au plus).
+**La regarder** :
 un badge « Démarrage… » ou « Service arrêté » = échec. Ne jamais
 photographier la page du vrai service sans le demander : l'aperçu montre
 l'utilisateur.
@@ -152,5 +157,6 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
 | Un écran paraît moins assombri que l'autre | Même voile partout, c'est l'écran qui rend le noir plus clair (plus lumineux, Black Equalizer…). Monter son curseur « assombrissement maximal » dans les réglages de la page. |
 | L'écran reste sombre | Impossible par conception (retrait après 6 s sans signal) ; sinon désactiver l'extension : `gnome-extensions disable vigie@micheldm974.github.io`. |
 | `smoke` : `rien ne répond` | `serve` non lancé ou autre `--port`. |
-| `ui` : `Aucun chromium` | Cache playwright vide : `playwright install chromium` depuis un venv jetable. |
+| `ui` : `Aucun chromium ni chrome-headless-shell` | Cache playwright vide : `playwright install chromium` depuis un venv jetable. |
+| `ui` : `ECHEC : … ERR_CONNECTION_REFUSED` | `serve` non lancé ou autre `--port`. |
 | Port 8031 déjà pris | Un `serve` traîne : `fuser -k 8031/tcp`. |
