@@ -13,6 +13,17 @@ from . import posture
 from .alerte import Alerte, ReglagesAlerte
 
 FREQUENCE = 5  # analyses par seconde : assez pour une posture, léger pour le processeur
+# Personne devant la caméra depuis un moment (jusqu'à 16 h par jour) : une analyse par
+# seconde suffit à voir quelqu'un revenir, et la caméra ne décode plus que 2 images/s
+# (une image a au plus 0,5 s). Retour à FREQUENCE dès qu'une personne est vue : on est
+# présent avant d'être avachi. Mesuré le 07/11/2026 en absence : analyse 13,9 % d'un cœur
+# à 5/s, 2,8 % à 1/s ; caméra (~5 images/s en YUYV) 8,1 % tout décodé, 2,9 % à 2/s.
+FREQUENCE_ABSENT = 1
+DECODAGE_ABSENT = 2  # images décodées par seconde pendant le ralenti
+DELAI_RALENTI = 120.0  # secondes d'absence continue avant de ralentir
+# Écart maximal entre deux étapes compté dans les bilans : couvre la période du ralenti
+# sans compter un trou (mise en veille du PC, fil bloqué).
+DT_MAX = 2.0
 # Mesures de la médiane glissante (0,6 s) : une image aberrante ne fait pas basculer l'état,
 # et un redressement se voit dès la deuxième bonne mesure (~0,3 s, contre ~0,5 s sur 5).
 LISSAGE = 3
@@ -44,6 +55,7 @@ class Moteur:
         self.alerte = Alerte()
         self._verrou = threading.Lock()
         self._arret = threading.Event()
+        self._reveil = threading.Event()  # une commande n'attend pas la fin d'une période
         self._fil = None
         self._pause = False
         self._historique = collections.deque(maxlen=LISSAGE)
@@ -58,6 +70,8 @@ class Moteur:
         self._cumuls = collections.Counter()
         self._causes = collections.Counter()  # temps avachi par (minute, signal en cause)
         self._dernier_vidage = horloge()
+        self._absent_depuis = None  # début de l'absence en cours
+        self._ralenti = False
         self._etat = {"etat": "demarrage"}
         self.recharger()
 
@@ -80,6 +94,7 @@ class Moteur:
             if pause:
                 self._enregistrement = None
                 self._apercu = None
+        self._reveil.set()
         # Fermer le périphérique pour de bon : une visio peut alors prendre la caméra.
         if pause:
             self.camera.arreter()
@@ -102,10 +117,12 @@ class Moteur:
                 "nom": nom, "debut": debut, "fin": debut + DUREE_CAPTURE, "mesures": [],
             }
             self._dernier_enregistrement = None
+        self._reveil.set()
 
     def tester_assombrissement(self, duree=3.0):
         with self._verrou:
             self._test_jusqua = self.horloge() + duree
+        self._reveil.set()
 
     def signaler_fausse_alerte(self):
         """L'utilisateur se dit droit alors que Vigie le juge avachi : on note la posture du
@@ -167,25 +184,30 @@ class Moteur:
 
     def arreter(self):
         self._arret.set()
+        self._reveil.set()
         if self._fil:
             self._fil.join(timeout=5)
         self.camera.arreter()
         self._vider_cumuls()
         self.ecran.signaler("arret", {"*": 0.0})
 
+    def periode(self):
+        """Secondes entre deux analyses : plus longue après une longue absence."""
+        return 1 / (FREQUENCE_ABSENT if self._ralenti else FREQUENCE)
+
     def _boucle(self):
-        periode = 1 / FREQUENCE
         while not self._arret.is_set():
             debut = time.monotonic()
             try:
                 self.etape()
             except Exception:
                 log.exception("Étape d'analyse en échec")
-            self._arret.wait(max(0.0, periode - (time.monotonic() - debut)))
+            self._reveil.wait(max(0.0, self.periode() - (time.monotonic() - debut)))
+            self._reveil.clear()
 
     def etape(self):
         maintenant = self.horloge()
-        dt = 0.0 if self._precedent is None else min(maintenant - self._precedent, 1.0)
+        dt = 0.0 if self._precedent is None else min(maintenant - self._precedent, DT_MAX)
         self._precedent = maintenant
         with self._verrou:
             pause, references, facteur = self._pause, self._references, self._facteur
@@ -217,6 +239,7 @@ class Moteur:
                     etat = "non_calibre"
 
         suivi = self._suivre_enregistrement(enregistrement, maintenant) if enregistrement else None
+        self._regler_cadence(etat, maintenant, enregistrement)
         with self._verrou:
             if etat == "ok":
                 self._fausse_alerte = False
@@ -249,9 +272,24 @@ class Moteur:
                 "enregistrement": suivi,
                 "dernier_enregistrement": self._dernier_enregistrement,
                 "fausse_alerte": fausse_alerte,
+                "ralenti": self._ralenti,
             }
             if etat == "avachi":
                 self._dernier_avachi = (maintenant, self._etat)
+
+    def _regler_cadence(self, etat, maintenant, enregistrement):
+        if etat != "absent":
+            self._absent_depuis = None
+        elif self._absent_depuis is None:
+            self._absent_depuis = maintenant
+        # Un enregistrement lancé depuis la page doit voir arriver la personne au plus vite.
+        ralenti = (self._absent_depuis is not None and not enregistrement
+                   and maintenant - self._absent_depuis >= DELAI_RALENTI)
+        if ralenti != self._ralenti:
+            self._ralenti = ralenti
+            self.camera.limiter(DECODAGE_ABSENT if ralenti else None)
+            log.info("Analyse à %s/s (%s)", FREQUENCE_ABSENT if ralenti else FREQUENCE,
+                     "personne depuis un moment" if ralenti else "quelqu'un est là")
 
     def _suivre_enregistrement(self, enregistrement, maintenant):
         """Phase de l'enregistrement en cours, ou None une fois terminé (et sauvegardé)."""

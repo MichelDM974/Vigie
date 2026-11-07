@@ -17,7 +17,8 @@ voile sombre descend sur l'écran, et il se lève dès que la posture redevient 
 
 - **Points du corps** : [MediaPipe Pose](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker)
   (modèle *full*, sur le processeur) repère le nez, les yeux, les oreilles et les
-  épaules, 5 fois par seconde.
+  épaules, 5 fois par seconde ; une seule après deux minutes sans personne à l'image,
+  le temps que quelqu'un revienne (la caméra ne décode alors que 2 images par seconde).
 - **Signaux de posture** : une caméra de face ne voit pas la courbure du dos, seulement
   ses conséquences. Vigie en tire six rapports sans unité : tête et nez au-dessus des
   épaules, hauteur de la tête dans l'image, proximité de l'écran, tête en avant du buste,

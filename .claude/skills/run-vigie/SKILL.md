@@ -127,8 +127,14 @@ Sans caméra ni modèle : le moteur est testé avec des doublures
   `XDG_RUNTIME_DIR` dans le scratchpad est trop long, prendre
   `/run/user/1000/<nom>` et le supprimer après.
 - **Lecture caméra à 30 images/s = ~50 % d'un cœur** en conversion seule :
-  la caméra est réglée à 10 images/s (`Camera(images_par_seconde=…)`).
-  Service complet ≈ 20 % d'un cœur.
+  la caméra est réglée à 10 images/s (`Camera(images_par_seconde=…)`, elle
+  en livre ~5 en YUYV). Service complet ≈ 25 % d'un cœur avec quelqu'un
+  devant ; après 2 min d'absence, 1 analyse/s et 2 images décodées/s
+  (`Camera.limiter`), ≈ 6 % (mesures du 07/11/2026, commentaire de
+  `moteur.FREQUENCE_ABSENT`). `ralenti` dans `/api/etat`, bascules au
+  journal (« Analyse à 1/s »). Banc de l'analyse seule : `serve` (caméra
+  factice = absent, vrai MediaPipe), temps processeur lu dans
+  `/proc/<pid>/stat` après 2 min.
 - **Pièce sombre** : MediaPipe ne voit personne, état « absent », aucune
   alerte. Diagnostiquer par la luminosité moyenne d'une image (un nombre),
   pas en regardant l'image.

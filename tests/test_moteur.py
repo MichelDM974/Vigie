@@ -164,3 +164,80 @@ def test_apercu_seulement_avec_un_spectateur(banc):
         banc.avancer(0.4)
         numero, jpeg = banc.moteur.apercu()
     assert numero == 2 and jpeg[:2] == b"\xff\xd8"
+
+
+def test_longue_absence_ralentit_puis_quelqu_un_revient(banc):
+    from vigie.moteur import DECODAGE_ABSENT, DELAI_RALENTI, FREQUENCE, FREQUENCE_ABSENT
+
+    banc.calibrer()
+    banc.detecteur.points = None
+    etat = banc.avancer(DELAI_RALENTI - 1)
+    assert etat["etat"] == "absent" and not etat["ralenti"]
+    assert banc.moteur.periode() == 1 / FREQUENCE and banc.camera.limite is None
+    etat = banc.avancer(1.4)
+    assert etat["ralenti"] and banc.moteur.periode() == 1 / FREQUENCE_ABSENT
+    assert banc.camera.limite == DECODAGE_ABSENT
+    banc.detecteur.points = points_personne()
+    etat = banc.avancer(1, dt=1)  # une seule analyse au ralenti suffit à repartir
+    assert etat["etat"] == "ok" and not etat["ralenti"]
+    assert banc.moteur.periode() == 1 / FREQUENCE and banc.camera.limite is None
+
+
+def test_absences_breves_ne_ralentissent_pas(banc):
+    from vigie.moteur import DELAI_RALENTI
+
+    banc.calibrer()
+    for _ in range(3):  # le décompte repart à chaque retour, même incertain
+        banc.detecteur.points = None
+        banc.avancer(DELAI_RALENTI - 10)
+        masque = points_personne()
+        masque[11] = (0.5, 0.8, 0.1)
+        banc.detecteur.points = masque
+        assert banc.avancer(0.2)["etat"] == "incertain"
+    assert not banc.moteur.instantane()["ralenti"]
+
+
+def test_pas_de_ralenti_pendant_un_enregistrement(banc):
+    from vigie.moteur import DELAI_RALENTI
+
+    banc.detecteur.points = None
+    assert banc.avancer(DELAI_RALENTI + 1)["ralenti"]
+    banc.moteur.enregistrer("droit")
+    assert not banc.avancer(0.2)["ralenti"]
+    assert banc.camera.limite is None
+
+
+def test_pause_quitte_le_ralenti(banc):
+    from vigie.moteur import DELAI_RALENTI
+
+    banc.calibrer()
+    banc.detecteur.points = None
+    assert banc.avancer(DELAI_RALENTI + 1)["ralenti"]
+    banc.moteur.mettre_en_pause(True)
+    assert not banc.avancer(0.2)["ralenti"]
+
+
+def test_bilan_juste_au_ralenti(banc):
+    from vigie.moteur import FREQUENCE_ABSENT
+
+    banc.calibrer()
+    banc.detecteur.points = None
+    banc.avancer(30 * 60, dt=1 / FREQUENCE_ABSENT + 0.05)  # période + temps d'analyse
+    assert banc.moteur.bilan()["absent"] == pytest.approx(30 * 60, abs=2)
+
+
+def test_commande_reveille_la_boucle_au_ralenti(banc):
+    import time
+
+    from vigie.moteur import DELAI_RALENTI
+
+    banc.detecteur.points = None
+    assert banc.avancer(DELAI_RALENTI + 1)["ralenti"]
+    banc.moteur.demarrer()
+    try:
+        time.sleep(0.1)  # la boucle attend maintenant une seconde entière
+        banc.moteur.mettre_en_pause(True)
+        time.sleep(0.3)
+        assert banc.moteur.instantane()["etat"] == "pause"
+    finally:
+        banc.moteur.arreter()

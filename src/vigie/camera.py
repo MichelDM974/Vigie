@@ -18,6 +18,9 @@ class Camera:
         # Lire à 30 images/s coûte ~50 % d'un cœur rien qu'en conversion ; la posture
         # n'est analysée que 5 fois par seconde.
         self.images_par_seconde = images_par_seconde
+        # Chaque image est saisie (le flux reste frais), mais la conversion en BGR, qui fait
+        # l'essentiel du coût, peut se limiter (limiter()) quand le moteur ralentit.
+        self._intervalle = 0.0
         self.erreur = None
         self._image = None
         self._numero = 0
@@ -38,6 +41,10 @@ class Camera:
             self._fil.join(timeout=3)
         with self._verrou:
             self._image = None
+
+    def limiter(self, par_seconde=None):
+        """Décode au plus `par_seconde` images par seconde (None : toutes)."""
+        self._intervalle = 1 / par_seconde if par_seconde else 0.0
 
     def derniere(self):
         """(numéro, image BGR) de la dernière image lue, ou None."""
@@ -64,13 +71,22 @@ class Camera:
                 continue
             self.erreur = None
             echecs = 0
+            dernier_decodage = float("-inf")
             while not self._arret.is_set() and echecs < 30:
-                ok, image = cap.read()
+                if not cap.grab():
+                    echecs += 1
+                    time.sleep(0.1)
+                    continue
+                instant = time.monotonic()
+                if instant - dernier_decodage < self._intervalle:
+                    continue
+                ok, image = cap.retrieve()
                 if not ok:
                     echecs += 1
                     time.sleep(0.1)
                     continue
-                echecs = 0
+                echecs = 0  # pas avant : un décodage toujours en échec doit finir par compter
+                dernier_decodage = instant
                 with self._verrou:
                     self._image = image
                     self._numero += 1
@@ -95,6 +111,9 @@ class CameraFactice:
 
     def arreter(self):
         self._actif = False
+
+    def limiter(self, par_seconde=None):
+        pass
 
     def derniere(self):
         if not self._actif:

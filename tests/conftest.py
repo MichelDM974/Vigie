@@ -48,6 +48,10 @@ class CameraTest:
         self.erreur = None
         self.actif = False
         self.numero = 0
+        self.limite = None
+
+    def limiter(self, par_seconde=None):
+        self.limite = par_seconde
 
     def demarrer(self):
         self.actif = True
