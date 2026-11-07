@@ -12,13 +12,15 @@ tels quels et n'y écrire que des puces ; dans « Champs en plus », la forme
 
 - Une posture corrigée sans gêner : détecter les vrais avachissements et
   faire baisser les fausses alertes.
-- La suite prévue : parler au PC (#3), puis les commandes par gestes (#4).
+- Parler au PC (#3) et les gestes (#4) sont en suspens depuis le 07/11/2026
+  (choix de l'utilisateur) : ne pas les proposer comme la suite.
 - Tout reste sur le PC : aucune image enregistrée, aucun service en ligne.
 
 ## Bonne piste
 
-- Elle tourne en local sur le processeur du PC, à côté du reste, au rythme
-  du flux (10 images par seconde).
+- Elle tourne en local sur le PC, à côté du reste, au rythme de l'analyse
+  (5 images par seconde, 1 quand personne n'est là ; la caméra en livre ~5),
+  sans alourdir le processeur (~25 % d'un cœur déjà pris quand on est devant).
 - Elle garde les choix d'alerte : l'écran qui s'assombrit, ni notification
   ni son.
 - Elle dit comment on vérifiera le gain, comme le relevé étiqueté du
