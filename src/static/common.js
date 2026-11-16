@@ -1,5 +1,5 @@
 "use strict";
-// Vigie — aides communes aux web apps de « Mes Projets » (style commun, modèle CryptX).
+// Vigie — aides communes aux scripts de la page.
 
 // Bulles d'aide : remplacent l'infobulle native des attributs title (lente, sans style),
 // pour tout élément, même créé après coup. Le title est mis de côté pendant le survol,

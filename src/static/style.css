@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  /* Style commun épuré (skill nouveau-projet, modèle CryptX) : fond noir, halo sarcelle
+  /* Style épuré : fond noir, halo sarcelle
      en haut à gauche qui s'éteint vers le bas ; panneaux opaques à peine plus clairs,
      bordés d'un filet presque invisible. Valeurs dérivées de l'accent, en dur. */
   --bg: #070909;

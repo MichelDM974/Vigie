@@ -121,7 +121,7 @@ def commande_smoke(args):
 # --- ui --------------------------------------------------------------
 
 # Le chromium que `playwright install chromium` met en cache ; à défaut, son
-# chrome-headless-shell, qui suffit aussi (repris de run-cdc).
+# chrome-headless-shell, qui suffit aussi.
 CHROMIUMS = (sorted(pathlib.Path.home().glob(".cache/ms-playwright/chromium-*/chrome-linux*/chrome"))
              or sorted(pathlib.Path.home().glob(
                  ".cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux*/chrome-headless-shell")))
@@ -137,7 +137,7 @@ class Chromium:
     """Le chromium en cache, piloté sans playwright ni `--screenshot` (qui se
     fige) : le protocole DevTools passe par un tube (`--remote-debugging-pipe` :
     du JSON terminé par un octet nul, lu sur son fd 3, écrit sur son fd 4), la
-    stdlib suffit. Réduit de run-cdc à ce dont `ui` se sert."""
+    stdlib suffit. Réduit à ce dont `ui` se sert."""
 
     def __init__(self, binaire, options=()):
         self.profil = tempfile.TemporaryDirectory(prefix="vigie-chromium-")

@@ -10,7 +10,7 @@ Service Python (`src/vigie/`, entrée `python -m vigie`) qui lit la webcam,
 (`src/static/`) ; une extension GNOME Shell
 (`gnome-extension/vigie@micheldm974.github.io/`) reçoit l'état par D-Bus et
 assombrit l'écran. Pas de Docker (caméra, bus de session et ouverture de
-session : cf. décisions du journal).
+session).
 
 Tous les chemins ci-dessous sont relatifs à `Vigie/`.
 
@@ -53,7 +53,7 @@ Arrêter : `fuser -k 8031/tcp`.
 
 Chromium de `~/.cache/ms-playwright` (à défaut son chrome-headless-shell),
 piloté par le protocole DevTools sur un tube (`--remote-debugging-pipe`,
-stdlib, classes reprises de run-cdc) ; ni playwright ni `--screenshot`, qui
+stdlib, classes reprises d'un autre de mes drivers) ; ni playwright ni `--screenshot`, qui
 se fige. Le flux MJPEG de l'aperçu ne finit jamais : pas d'attente de
 `load`, capture dès que le badge a quitté « Démarrage… » (3 s au plus).
 **La regarder** :
