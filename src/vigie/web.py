@@ -1,10 +1,11 @@
 """Page locale de Vigie : aperçu de la caméra, postures de référence, réglages, bilan."""
 
 import asyncio
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -29,8 +30,42 @@ class Reglages(BaseModel):
     ecrans: dict[str, float] | None = None
 
 
+HOTES_LOCAUX = {"127.0.0.1", "localhost"}
+ORIGINE_LOCALE = re.compile(r"http://(127\.0\.0\.1|localhost)(:\d+)?")
+ECRITURES = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+class SeulementLocal:
+    """Le service n'écoute que sur 127.0.0.1, mais le navigateur de la
+    personne peut l'atteindre depuis n'importe quelle page. Un en-tête Host
+    étranger (rebinding DNS : un domaine tiers qui se résout soudain en
+    127.0.0.1) est refusé, comme une écriture venue d'une autre origine
+    qu'une page locale. Une requête sans Origin (extension GNOME, curl)
+    passe. Middleware ASGI pur : le flux MJPEG, sans fin, n'est pas mis en
+    mémoire."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            entetes = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope["headers"]}
+            hote = entetes.get("host", "").rsplit(":", 1)[0]
+            origine = entetes.get("origin")
+            refus = None
+            if hote not in HOTES_LOCAUX:
+                refus = PlainTextResponse("Hôte refusé", status_code=400)
+            elif scope["method"] in ECRITURES and origine is not None and not ORIGINE_LOCALE.fullmatch(origine):
+                refus = PlainTextResponse("Origine refusée", status_code=403)
+            if refus is not None:
+                await refus(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+
 def creer_app(moteur, stockage):
     app = FastAPI(title="Vigie")
+    app.add_middleware(SeulementLocal)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/", include_in_schema=False)

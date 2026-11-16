@@ -7,7 +7,7 @@ from vigie.web import creer_app
 
 @pytest.fixture
 def client(banc):
-    return TestClient(creer_app(banc.moteur, banc.stockage))
+    return TestClient(creer_app(banc.moteur, banc.stockage), base_url="http://127.0.0.1:8030")
 
 
 def test_page_d_accueil(client):
@@ -75,3 +75,24 @@ def test_fausse_alerte(client, banc):
 def test_signaux(client):
     signaux = client.get("/api/signaux").json()
     assert signaux["proximite"]["cause"] == "trop près de l'écran"
+
+
+def test_hote_etranger_refuse(client):
+    """Rebinding DNS : un domaine tiers résolu en 127.0.0.1 garde son nom
+    dans Host."""
+    assert client.get("/api/etat", headers={"Host": "attaquant.example:8030"}).status_code == 400
+    assert client.get("/api/etat", headers={"Host": "localhost:8030"}).status_code == 200
+
+
+def test_ecriture_d_une_autre_origine_refusee(client, banc):
+    r = client.post("/api/pause", json={"pause": True}, headers={"Origin": "https://attaquant.example"})
+    assert r.status_code == 403 and banc.camera.actif
+    assert client.post("/api/pause", json={"pause": True}, headers={"Origin": "null"}).status_code == 403
+    assert client.get("/api/etat", headers={"Origin": "https://attaquant.example"}).status_code == 200
+
+
+def test_ecriture_locale_ou_sans_origine_acceptee(client, banc):
+    assert client.post("/api/pause", json={"pause": True}, headers={"Origin": "http://127.0.0.1:8030"}).status_code == 200
+    assert client.post("/api/pause", json={"pause": False}, headers={"Origin": "http://localhost:8030"}).status_code == 200
+    assert client.post("/api/pause", json={"pause": True}).status_code == 200  # extension GNOME, curl
+    assert not banc.camera.actif
