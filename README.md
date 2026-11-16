@@ -11,6 +11,8 @@ redresse.
 
 [![CI](https://github.com/MichelDM974/Vigie/actions/workflows/ci.yml/badge.svg)](https://github.com/MichelDM974/Vigie/actions/workflows/ci.yml)
 
+![Page locale de Vigie, ici avec la caméra factice de développement (personne à l’image) : aperçu de la caméra, écart à la posture, postures de référence et bilan du jour](docs/captures/page.png)
+
 ## Le concept
 
 Une remarque ou une notification s'ignore vite ; un écran qui baisse, beaucoup moins.
