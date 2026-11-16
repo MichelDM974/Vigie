@@ -8,7 +8,8 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-26.04' }}
+    # Dépôt public : jamais de runner auto-hébergé (une PR de fork y exécuterait son code).
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
 
